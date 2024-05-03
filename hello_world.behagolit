@@ -1,8 +1,12 @@
 main = printLine message
 
-message = concat "Hello, world!" "\n" "The answer is: " theAnswer
+message = concat "Hello, world!" "\n" theAnswer
 
-theAnswer = intToStr fourtyTwo
+theAnswer = tellAnswer fourtyTwoRepr
+
+tellAnswer answer = concat "The answer is: " answer
+
+fourtyTwoRepr = intToStr fourtyTwo
 
 fourtyTwo = + fourty 2
 

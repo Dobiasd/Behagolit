@@ -40,6 +40,11 @@ class ConstantIntegerExpression(ConstantExpression):
 
 
 @dataclass
+class Parameter(Token):
+    name: str
+
+
+@dataclass
 class Call(Expression):
     function: str
     args: Sequence[Expression]
@@ -48,6 +53,7 @@ class Call(Expression):
 @dataclass
 class Definition:
     name: str
+    params: List[Parameter]
     expression: Expression
 
 
@@ -87,6 +93,10 @@ def parser(tokens: List[Token]) -> List[Definition]:
         assert get_definition(definitions, curr.value) is None
         defined = curr
 
+        params: List[Parameter] = []
+        while not isinstance(current(), Assignment):
+            params.append(Parameter(current_and_progress(Name).value))
+
         current_and_progress(Assignment)
 
         func = current_and_progress(Name)
@@ -101,6 +111,6 @@ def parser(tokens: List[Token]) -> List[Definition]:
             if isinstance(current_arg, IntegerConstant):
                 args.append(ConstantIntegerExpression(current_arg.value))
             progress()
-        definitions.append(Definition(defined.value, Call(func.value, args)))
+        definitions.append(Definition(defined.value, params, Call(func.value, args)))
 
     return definitions

@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List
+from typing import List, Dict
 
 from parser import Definition, Call, Expression, ConstantIntegerExpression, ConstantStringExpression, \
     ConstantExpression, get_definition, Variable
@@ -38,11 +38,26 @@ builtin_functions = {
 }
 
 
+def replace_variable(replacements: Dict[str, Expression], expression: Expression) -> Expression:
+    if isinstance(expression, Variable):
+        return replacements[expression.name]
+    return expression
+
+
 def evaluate(ast: List[Definition], expression: Expression) -> ConstantExpression:
     if isinstance(expression, (ConstantIntegerExpression | ConstantStringExpression)):
         return expression
     if isinstance(expression, Call):
         evaluated_args = list(map(partial(evaluate, ast), expression.args))
+        definition = get_definition(ast, expression.function)
+        # todo: Handle global variable definitions like functions with zero parameters. Is it already so?
+        if definition is not None:
+            param_names = list(map(lambda p: p.name, definition.params))
+            arguments = dict(zip(param_names, evaluated_args))
+            call = definition.expression
+            assert isinstance(call, Call)
+            replaced_args = list(map(partial(replace_variable, arguments), call.args))
+            return evaluate(ast, Call(call.function, replaced_args))
         assert expression.function in builtin_functions
         return builtin_functions[expression.function](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
