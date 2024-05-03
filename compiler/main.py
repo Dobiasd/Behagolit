@@ -4,7 +4,7 @@ from lexer import lexer
 from parser import parser
 
 
-def main():
+def main() -> None:
     with open("hello_world.behagolit", "r") as file:
         source = file.read()
     print(source)

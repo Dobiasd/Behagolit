@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional, Type
+from typing import List, Optional, Type, Sequence
 from typing import TypeVar, Generic, Any
 
 from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon
@@ -10,7 +10,7 @@ T = TypeVar('T')
 
 # https://stackoverflow.com/a/66941316/1866775
 class MyTypeChecker(Generic[T]):
-    def is_right_type(self, x: Any):
+    def is_right_type(self, x: Any) -> bool:
         return isinstance(x, self.__orig_class__.__args__[0])  # type: ignore
 
 
@@ -26,7 +26,7 @@ class Variable(Expression):
 
 @dataclass
 class ConstantExpression(Expression):
-    value: str
+    value: int | str
 
 
 @dataclass
@@ -42,7 +42,7 @@ class ConstantIntegerExpression(ConstantExpression):
 @dataclass
 class Call(Expression):
     function: str
-    args: List[Expression]
+    args: Sequence[Expression]
 
 
 @dataclass
@@ -71,9 +71,9 @@ def parser(tokens: List[Token]) -> List[Definition]:
 
     def current_and_progress(cls: Type[T]) -> T:
         current_token = current()
-        assert MyTypeChecker[cls]().is_right_type(current_token)
+        assert MyTypeChecker[cls]().is_right_type(current_token)  # type: ignore
         progress()
-        return current_token
+        return current_token  # type: ignore
 
     def progress() -> Token:
         return tokens.pop(0)
@@ -93,13 +93,13 @@ def parser(tokens: List[Token]) -> List[Definition]:
 
         args: List[Variable | ConstantStringExpression | ConstantIntegerExpression] = []
         while not isinstance(current(), Semicolon):
-            curr = current()
-            if isinstance(curr, Name):
-                args.append(Variable(curr.value))
-            if isinstance(curr, StringConstant):
-                args.append(ConstantStringExpression(curr.value))
-            if isinstance(curr, IntegerConstant):
-                args.append(ConstantIntegerExpression(curr.value))
+            current_arg = current()
+            if isinstance(current_arg, Name):
+                args.append(Variable(current_arg.value))
+            if isinstance(current_arg, StringConstant):
+                args.append(ConstantStringExpression(current_arg.value))
+            if isinstance(current_arg, IntegerConstant):
+                args.append(ConstantIntegerExpression(current_arg.value))
             progress()
         definitions.append(Definition(defined.value, Call(func.value, args)))
 

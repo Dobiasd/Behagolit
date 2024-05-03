@@ -34,13 +34,13 @@ class Semicolon(Token):
 
 
 def lexer(augmented_source_orig: str) -> List[Token]:
-    augmented_source = [*augmented_source_orig]
-    tokens = []
+    augmented_source: List[str] = [*augmented_source_orig]
+    tokens: List[Token] = []
 
     def done() -> bool:
         return len(augmented_source) == 0
 
-    def current() -> Optional[str]:
+    def current() -> str:
         return augmented_source[0]
 
     def progress() -> str:

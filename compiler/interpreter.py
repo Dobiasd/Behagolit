@@ -5,16 +5,19 @@ from parser import Definition, Call, Expression, ConstantIntegerExpression, Cons
     ConstantExpression, get_definition, Variable
 
 
-def printLine(text: ConstantStringExpression) -> None:
+def print_line(text: ConstantStringExpression) -> None:
     print(text.value)
 
 
-def concat(*args: List[ConstantStringExpression]) -> ConstantStringExpression:
-    arg_values = list(map(lambda arg: arg.value, args))
+def concat(*args: ConstantStringExpression) -> ConstantStringExpression:
+    def get_value(exp: ConstantStringExpression) -> str:
+        return exp.value
+
+    arg_values = list(map(get_value, args))
     return ConstantStringExpression("".join(arg_values))
 
 
-def intToStr(number: ConstantIntegerExpression) -> ConstantStringExpression:
+def int_to_str(number: ConstantIntegerExpression) -> ConstantStringExpression:
     return ConstantStringExpression(str(number.value))
 
 
@@ -27,9 +30,9 @@ def multiply(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> Cons
 
 
 builtin_functions = {
-    "printLine": printLine,
+    "printLine": print_line,
     "concat": concat,
-    "intToStr": intToStr,
+    "intToStr": int_to_str,
     "+": add,
     "*": multiply,
 }
@@ -41,14 +44,16 @@ def evaluate(ast: List[Definition], expression: Expression) -> ConstantExpressio
     if isinstance(expression, Call):
         evaluated_args = list(map(partial(evaluate, ast), expression.args))
         assert expression.function in builtin_functions
-        return builtin_functions[expression.function](*evaluated_args)
+        return builtin_functions[expression.function](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
         definition = get_definition(ast, expression.name)
+        if not definition:
+            raise RuntimeError(f"No definition found for: {expression.name}")
         return evaluate(ast, definition.expression)
     raise RuntimeError("Wat")
 
 
-def interpret(ast: List[Definition]):
+def interpret(ast: List[Definition]) -> None:
     mains = list(filter(lambda d: d.name == "main", ast))
     assert len(mains) == 1
     main = mains[0].expression
