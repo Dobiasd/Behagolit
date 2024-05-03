@@ -1,8 +1,17 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional, Any
+from typing import List, Optional, Type
+from typing import TypeVar, Generic, Any
 
-from lexer import Token, Name, Assignment, Semicolon, StringConstant, IntegerConstant
+from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon
+
+T = TypeVar('T')
+
+
+# https://stackoverflow.com/a/66941316/1866775
+class MyTypeChecker(Generic[T]):
+    def is_right_type(self, x: Any):
+        return isinstance(x, self.__orig_class__.__args__[0])  # type: ignore
 
 
 @dataclass
@@ -16,12 +25,17 @@ class Variable(Expression):
 
 
 @dataclass
-class ConstantStringExpression(Expression):
+class ConstantExpression(Expression):
     value: str
 
 
 @dataclass
-class ConstantIntegerExpression(Expression):
+class ConstantStringExpression(ConstantExpression):
+    value: str
+
+
+@dataclass
+class ConstantIntegerExpression(ConstantExpression):
     value: int
 
 
@@ -37,17 +51,11 @@ class Definition:
     expression: Expression
 
 
-def get_definition(definitions: List[Definition], name: str) -> Definition:
+def get_definition(definitions: List[Definition], name: str) -> Optional[Definition]:
     for definition in definitions:
         if definition.name == name:
             return definition
-    raise RuntimeError(f'Definition {name} not found')
-
-
-def evaluate(expression: Expression) -> Any:
-    if isinstance(expression, (ConstantIntegerExpression | ConstantStringExpression)):
-        return expression.value
-    raise RuntimeError(f"Can not evaluate expression: {expression}")
+    return None
 
 
 def parser(tokens: List[Token]) -> List[Definition]:
@@ -57,42 +65,42 @@ def parser(tokens: List[Token]) -> List[Definition]:
         return len(tokens) == 0
 
     def current() -> Optional[Token]:
+        if len(tokens) == 0:
+            return None
         return tokens[0]
+
+    def current_and_progress(cls: Type[T]) -> T:
+        current_token = current()
+        assert MyTypeChecker[cls]().is_right_type(current_token)
+        progress()
+        return current_token
 
     def progress() -> Token:
         return tokens.pop(0)
 
     while not done():
-        while isinstance(current(), Semicolon):
+        if isinstance(current(), Semicolon):
             progress()
+            continue
 
-        curr = current()
-        assert isinstance(curr, Name)
+        curr = current_and_progress(Name)
+        assert get_definition(definitions, curr.value) is None
         defined = curr
-        assert defined.value not in set(map(lambda d: d.name, definitions))
-        progress()
 
-        assert isinstance(current(), Assignment)
-        progress()
+        current_and_progress(Assignment)
 
-        curr = current()
-        if isinstance(curr, Name):
-            func = curr
+        func = current_and_progress(Name)
+
+        args: List[Variable | ConstantStringExpression | ConstantIntegerExpression] = []
+        while not isinstance(current(), Semicolon):
+            curr = current()
+            if isinstance(curr, Name):
+                args.append(Variable(curr.value))
+            if isinstance(curr, StringConstant):
+                args.append(ConstantStringExpression(curr.value))
+            if isinstance(curr, IntegerConstant):
+                args.append(ConstantIntegerExpression(curr.value))
             progress()
-
-            args: List[Name | StringConstant | IntegerConstant] = []
-            while not isinstance(current(), Semicolon):
-                curr = current()
-                assert isinstance(curr, (Name, StringConstant, IntegerConstant))
-                args.append(curr)
-                progress()
-            definitions.append(
-                Definition(defined.value, Call(func.value, args)))
-
-        elif isinstance(curr, StringConstant):
-            definitions.append(Definition(defined.value, ConstantStringExpression(curr.value)))
-        elif isinstance(curr, IntegerConstant):
-            definitions.append(Definition(defined.value, ConstantIntegerExpression(curr.value)))
-        progress()
+        definitions.append(Definition(defined.value, Call(func.value, args)))
 
     return definitions

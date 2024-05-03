@@ -29,27 +29,12 @@ class Assignment(Token):
 
 
 @dataclass
-class EqualityCheck(Token):
-    pass
-
-
-@dataclass
 class Semicolon(Token):
     pass
 
 
-@dataclass
-class ScopeOpen(Token):
-    pass
-
-
-@dataclass
-class ScopeClose(Token):
-    pass
-
-
-def lexer(augmented_source: str) -> List[Token]:
-    augmented_source = [*augmented_source]
+def lexer(augmented_source_orig: str) -> List[Token]:
+    augmented_source = [*augmented_source_orig]
     tokens = []
 
     def done() -> bool:
@@ -67,14 +52,6 @@ def lexer(augmented_source: str) -> List[Token]:
             continue
         if current() == ";":
             tokens.append(Semicolon())
-            progress()
-            continue
-        if current() == "{":
-            tokens.append(ScopeOpen())
-            progress()
-            continue
-        if current() == "}":
-            tokens.append(ScopeClose())
             progress()
             continue
         if current() in ["+", "-", "*", "/"]:
@@ -101,6 +78,7 @@ def lexer(augmented_source: str) -> List[Token]:
             while not done() and current() != "\"":
                 acc = acc + current()
                 progress()
+            acc = acc.encode().decode('unicode_escape')
             tokens.append(StringConstant(acc))
             assert current() == "\""
             progress()
@@ -112,8 +90,6 @@ def lexer(augmented_source: str) -> List[Token]:
                 progress()
             if acc == "=":
                 tokens.append(Assignment())
-            elif acc == "==":
-                tokens.append(EqualityCheck())
             else:
                 raise RuntimeError(f"Wat? {acc}")
             continue

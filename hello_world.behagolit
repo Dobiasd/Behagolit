@@ -1,5 +1,9 @@
-fourtyTwo = + 2 4
-
-message = "Hello, world!"
-
 main = printLine message
+
+message = concat "Hello, world!" "\n" "The answer is: " theAnswer
+
+theAnswer = intToStr fourtyTwo
+
+fourtyTwo = + fourty 2
+
+fourty = * 4 10
