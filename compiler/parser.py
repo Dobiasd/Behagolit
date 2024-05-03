@@ -99,18 +99,26 @@ def parser(tokens: List[Token]) -> List[Definition]:
 
         current_and_progress(Assignment)
 
-        func = current_and_progress(Name)
-
-        args: List[Variable | ConstantStringExpression | ConstantIntegerExpression] = []
-        while not isinstance(current(), Semicolon):
-            current_arg = current()
-            if isinstance(current_arg, Name):
-                args.append(Variable(current_arg.value))
-            if isinstance(current_arg, StringConstant):
-                args.append(ConstantStringExpression(current_arg.value))
-            if isinstance(current_arg, IntegerConstant):
-                args.append(ConstantIntegerExpression(current_arg.value))
-            progress()
-        definitions.append(Definition(defined.value, params, Call(func.value, args)))
+        curr = current()
+        if isinstance(curr, StringConstant):
+            definitions.append(Definition(defined.value, params, ConstantStringExpression(curr.value)))
+        elif isinstance(curr, IntegerConstant):
+            definitions.append(Definition(defined.value, params, ConstantIntegerExpression(curr.value)))
+        elif isinstance(curr, Name):
+            func = current_and_progress(Name)
+            args: List[Variable | ConstantStringExpression | ConstantIntegerExpression] = []
+            while not isinstance(current(), Semicolon):
+                current_arg = current()
+                if isinstance(current_arg, Name):
+                    args.append(Variable(current_arg.value))
+                if isinstance(current_arg, StringConstant):
+                    args.append(ConstantStringExpression(current_arg.value))
+                if isinstance(current_arg, IntegerConstant):
+                    args.append(ConstantIntegerExpression(current_arg.value))
+                progress()
+            definitions.append(Definition(defined.value, params, Call(func.value, args)))
+        else:
+            raise RuntimeError("Wat")
+        progress()
 
     return definitions

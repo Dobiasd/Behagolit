@@ -50,7 +50,6 @@ def evaluate(ast: List[Definition], expression: Expression) -> ConstantExpressio
     if isinstance(expression, Call):
         evaluated_args = list(map(partial(evaluate, ast), expression.args))
         definition = get_definition(ast, expression.function)
-        # todo: Handle global variable definitions like functions with zero parameters. Is it already so?
         if definition is not None:
             param_names = list(map(lambda p: p.name, definition.params))
             arguments = dict(zip(param_names, evaluated_args))

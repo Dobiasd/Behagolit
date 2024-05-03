@@ -8,6 +8,8 @@ tellAnswer answer = concat "The answer is: " answer
 
 fourtyTwoRepr = intToStr fourtyTwo
 
-fourtyTwo = + fourty 2
+fourtyTwo = + fourty two
 
 fourty = * 4 10
+
+two = 2
