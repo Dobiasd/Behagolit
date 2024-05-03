@@ -1,0 +1,5 @@
+fourtyTwo = + 2 4
+
+message = "Hello, world!"
+
+main = printLine message
