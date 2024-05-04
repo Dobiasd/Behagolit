@@ -5,13 +5,15 @@
 - structs
 - enforce elm architecture?
 - describe grammar is not context free https://en.wikipedia.org/wiki/Off-side_rule
-- - stack based programming vergleichen (joy und cat)
+- stack based programming vergleichen (joy und cat)
 - concatenative programming vergleichen: https://github.com/factor/factor/
 - tailrec annotation that fails compilation of the function is not tail recursive?
 - enums / sum type classes should have a fromString function, like a factory stuff
 - explain no member functions, just structs and free functions
 - support modules for encapsulation
 - math number types as types, natural, whole, real, rational, irrational
+- syntax highlighting bauen
+- online playground bauen
 - avoid operator precedence completely in arithmetric expressions, force the user to use parentheses or so
 - mark functions as pure/state_depending/idempotent_state_changing/non_idempotent_state_changing etc., perhaps automatically -> thread safety becomes type safety
 - support extensible records (structural typing for structs)?
@@ -70,10 +72,9 @@
   - https://rainingcomputers.blog/dist/the_path_to_implementing_a_programming_language.md
 
 
- 
-
 ### sum of squares (text file, lines)
 
+```
 input: str
 split_lines: str -> List[str]
 map: List[a] -> (a -> b) -> List[b]
@@ -91,12 +92,11 @@ input split_lines strToIntAll squareAll sum
 with
     squareAll = map square
     strToIntAll = map strToInt
-
+```
 
 a plain value is similar to a function (disregarding side effects) taking 0 parameters
 
-
-
+```
 import io.readLine
 import string.strToInt
 import string.toString
@@ -105,7 +105,6 @@ import string.toString
 struct foo =
     a : Uint64
     b : String
-
 
 
 add : Uint64 Uint64 -> Uint64
@@ -134,3 +133,4 @@ work text = text splitLines strsToInts squareInts sum toString
 
 main : void -> void [IOIn, IOOut]
 main = readLine work printLn
+```
