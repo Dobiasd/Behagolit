@@ -14,6 +14,11 @@ class Name(Token):
 
 
 @dataclass
+class BoolConstant(Token):
+    value: bool
+
+
+@dataclass
 class StringConstant(Token):
     value: str
 
@@ -81,7 +86,10 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             while not done() and current().isalpha():
                 acc = acc + current()
                 progress()
-            tokens.append(Name(acc))
+            if acc in ["True", "False"]:
+                tokens.append(BoolConstant(True if acc == "True" else False))
+            else:
+                tokens.append(Name(acc))
             continue
         if current().isnumeric():
             acc = ""

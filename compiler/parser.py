@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import List, Optional, Type, Sequence, Dict
 from typing import TypeVar, Generic, Any
 
-from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose
+from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose, \
+    BoolConstant
 
 T = TypeVar('T')
 
@@ -27,6 +28,11 @@ class Variable(Expression):
 @dataclass
 class ConstantExpression(Expression):
     value: int | str
+
+
+@dataclass
+class ConstantBoolExpression(ConstantExpression):
+    value: bool
 
 
 @dataclass
@@ -115,6 +121,8 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
         curr = current()
         if isinstance(curr, StringConstant):
             add_definition(scope, defined.value, Definition(params, ConstantStringExpression(curr.value)))
+        if isinstance(curr, BoolConstant):
+            add_definition(scope, defined.value, Definition(params, ConstantBoolExpression(curr.value)))
         elif isinstance(curr, IntegerConstant):
             add_definition(scope, defined.value, Definition(params, ConstantIntegerExpression(curr.value)))
         elif isinstance(curr, Name):
@@ -128,6 +136,8 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
                     args.append(ConstantStringExpression(current_arg.value))
                 if isinstance(current_arg, IntegerConstant):
                     args.append(ConstantIntegerExpression(current_arg.value))
+                if isinstance(current_arg, BoolConstant):
+                    args.append(ConstantBoolExpression(current_arg.value))
                 progress()
             add_definition(scope, defined.value, Definition(params, Call(func.value, args)))
         else:

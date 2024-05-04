@@ -2,7 +2,7 @@ from functools import partial
 from typing import Dict, List, Optional
 
 from parser import Definition, ConstantStringExpression, ConstantIntegerExpression, Expression, Variable, \
-    ConstantExpression, Call
+    ConstantExpression, Call, ConstantBoolExpression
 
 
 def print_line(text: ConstantStringExpression) -> None:
@@ -29,12 +29,20 @@ def multiply(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> Cons
     return ConstantIntegerExpression(a.value * b.value)
 
 
+def if_else(cond: ConstantBoolExpression, a: Expression, b: Expression) -> Expression:
+    if cond.value:
+        return a
+    else:
+        return b
+
+
 builtin_functions = {
     "printLine": print_line,
     "concat": concat,
     "intToStr": int_to_str,
     "+": add,
     "*": multiply,
+    "if": if_else,
 }
 
 
@@ -51,7 +59,7 @@ def fqn(scope: List[str], name: str) -> str:
 
 
 def evaluate(ast: Dict[str, Definition], scope: List[str], expression: Expression) -> ConstantExpression:
-    if isinstance(expression, (ConstantIntegerExpression | ConstantStringExpression)):
+    if isinstance(expression, (ConstantBoolExpression | ConstantIntegerExpression | ConstantStringExpression)):
         return expression
     if isinstance(expression, Call):
         definition = ast.get(expression.function, None)

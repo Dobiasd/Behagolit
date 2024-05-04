@@ -4,7 +4,7 @@ message = concat "Hello, world!" "\n" answerSentence
 
 answerSentence = tellFact "answer" theAnswer
 
-theAnswer = fourtyTwoRepr
+theAnswer = if True fourtyTwoRepr "No."
 
 tellFact name value = concat "The " name " is: " value
 
