@@ -28,21 +28,25 @@ class Variable(Expression):
 @dataclass
 class ConstantExpression(Expression):
     value: int | str
+    type_name: str = None
 
 
 @dataclass
 class ConstantBoolExpression(ConstantExpression):
     value: bool
+    type_name: str = "Boolean"
 
 
 @dataclass
 class ConstantStringExpression(ConstantExpression):
     value: str
+    type_name: str = "String"
 
 
 @dataclass
 class ConstantIntegerExpression(ConstantExpression):
     value: int
+    type_name: str = "Integer"
 
 
 @dataclass
