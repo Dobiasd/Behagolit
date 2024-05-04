@@ -1,8 +1,10 @@
 main = printLine message
 
-message = concat "Hello, world!" "\n" theAnswer
+message = concat "Hello, world!" "\n" answerSentence
 
-theAnswer = tellFact "answer" fourtyTwoRepr
+answerSentence = tellFact "answer" theAnswer
+
+theAnswer = fourtyTwoRepr
 
 tellFact name value = concat "The " name " is: " value
 

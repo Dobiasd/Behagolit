@@ -38,9 +38,10 @@ builtin_functions = {
 }
 
 
-def replace_variable(replacements: Dict[str, Expression], expression: Expression) -> Expression:
+def replace_params(args: Dict[str, Expression], expression: Expression) -> Expression:
     if isinstance(expression, Variable):
-        return replacements[expression.name]
+        if expression.name in args:
+            return args[expression.name]
     return expression
 
 
@@ -53,15 +54,13 @@ def evaluate(ast: Dict[str, Definition], scope: List[str], expression: Expressio
     if isinstance(expression, (ConstantIntegerExpression | ConstantStringExpression)):
         return expression
     if isinstance(expression, Call):
-        evaluated_args = list(map(partial(evaluate, ast, scope), expression.args))
         definition = ast.get(expression.function, None)
+        evaluated_args = list(map(partial(evaluate, ast, scope), expression.args))
         if definition is not None:
             param_names = list(map(lambda p: p.name, definition.params))
-            arguments = dict(zip(param_names, evaluated_args))
-            call = definition.expression
-            assert isinstance(call, Call)
-            replaced_args = list(map(partial(replace_variable, arguments), call.args))
-            return evaluate(ast, scope, Call(call.function, replaced_args))
+            extension = dict(map(lambda n, a: (n, Definition([], a)), param_names, evaluated_args))
+            extended_ast = ast | extension
+            return evaluate(extended_ast, scope, definition.expression)
         assert expression.function in builtin_functions
         return builtin_functions[expression.function](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
