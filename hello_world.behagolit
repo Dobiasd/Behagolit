@@ -2,9 +2,9 @@ main = printLine message
 
 message = concat "Hello, world!" "\n" theAnswer
 
-theAnswer = tellAnswer fourtyTwoRepr
+theAnswer = tellFact "answer" fourtyTwoRepr
 
-tellAnswer answer = concat "The answer is: " answer
+tellFact name value = concat "The " name " is: " value
 
 fourtyTwoRepr = intToStr fourtyTwo
 
