@@ -14,6 +14,15 @@ class Name(Token):
 
 
 @dataclass
+class LeftParenthesis(Token):
+    pass
+
+
+class RightParenthesis(Token):
+    pass
+
+
+@dataclass
 class BoolConstant(Token):
     value: bool
 
@@ -68,6 +77,14 @@ def lexer(augmented_source_orig: str) -> List[Token]:
 
     while not done():
         if current() == " ":
+            progress()
+            continue
+        if current() == "(":
+            tokens.append(LeftParenthesis())
+            progress()
+            continue
+        if current() == ")":
+            tokens.append(RightParenthesis())
             progress()
             continue
         if current() == ";":

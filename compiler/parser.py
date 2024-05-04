@@ -4,7 +4,7 @@ from typing import List, Optional, Type, Sequence, Dict
 from typing import TypeVar, Generic, Any
 
 from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose, \
-    BoolConstant
+    BoolConstant, LeftParenthesis, RightParenthesis
 
 T = TypeVar('T')
 
@@ -85,6 +85,30 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
     def add_definition(def_scope: List[str], name: str, definition: Definition) -> None:
         definitions[".".join(def_scope + [name])] = definition
 
+    def parse_expression(calls: bool = True) -> Expression:
+        curr = current()
+        if isinstance(curr, LeftParenthesis):
+            current_and_progress(LeftParenthesis)
+            res = parse_expression()
+            current_and_progress(RightParenthesis)
+            return res
+        if isinstance(curr, StringConstant):
+            return ConstantStringExpression(current_and_progress(StringConstant).value)
+        if isinstance(curr, BoolConstant):
+            return ConstantBoolExpression(current_and_progress(BoolConstant).value)
+        if isinstance(curr, IntegerConstant):
+            return ConstantIntegerExpression(current_and_progress(IntegerConstant).value)
+        if isinstance(curr, Name):
+            if calls:
+                func = current_and_progress(Name)
+                args: List[Expression] = []
+                while not isinstance(current(), (Semicolon, RightParenthesis)):
+                    args.append(parse_expression(False))
+                return Call(func.value, args)
+            else:
+                return Variable(current_and_progress(Name).value)
+        raise RuntimeError(f"Wat: {curr}")
+
     last_defined_name: Optional[str] = None
     scope: List[str] = []
 
@@ -118,30 +142,9 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
 
         current_and_progress(Assignment)
 
-        curr = current()
-        if isinstance(curr, StringConstant):
-            add_definition(scope, defined.value, Definition(params, ConstantStringExpression(curr.value)))
-        if isinstance(curr, BoolConstant):
-            add_definition(scope, defined.value, Definition(params, ConstantBoolExpression(curr.value)))
-        elif isinstance(curr, IntegerConstant):
-            add_definition(scope, defined.value, Definition(params, ConstantIntegerExpression(curr.value)))
-        elif isinstance(curr, Name):
-            func = current_and_progress(Name)
-            args: List[Variable | ConstantStringExpression | ConstantIntegerExpression] = []
-            while not isinstance(current(), Semicolon):
-                current_arg = current()
-                if isinstance(current_arg, Name):
-                    args.append(Variable(current_arg.value))
-                if isinstance(current_arg, StringConstant):
-                    args.append(ConstantStringExpression(current_arg.value))
-                if isinstance(current_arg, IntegerConstant):
-                    args.append(ConstantIntegerExpression(current_arg.value))
-                if isinstance(current_arg, BoolConstant):
-                    args.append(ConstantBoolExpression(current_arg.value))
-                progress()
-            add_definition(scope, defined.value, Definition(params, Call(func.value, args)))
-        else:
-            raise RuntimeError("Wat")
+        expression = parse_expression()
+
+        add_definition(scope, defined.value, Definition(params, expression))
         progress()
 
     return definitions
