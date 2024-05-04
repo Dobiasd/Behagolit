@@ -19,4 +19,4 @@ Behagolit
 - "Behag" comes from the German [behaglich](https://en.wiktionary.org/wiki/behaglich), meaning comfortable, cosy.
 - "olit" is the second-person singular past indicative of the Finish [olla](https://en.wiktionary.org/wiki/olit), which means "to be.
 
-- So Behagolit could resemble something like "you were comfortable". (And maybe using Behagolit is the reason you now no longer are comfortable. ^_-)
+So Behagolit could resemble something like "you were comfortable". (And maybe using Behagolit is the reason you now no longer are comfortable. ^_-)
