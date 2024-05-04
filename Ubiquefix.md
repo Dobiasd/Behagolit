@@ -153,10 +153,9 @@ Refactored a bit, it looks like this:
 
 ```
 input splitOnComma stringsToIntegers squareIntegers
-    with
-        splitOnComma = split ','
-        stringsToIntegers = map stringToInteger
-        squareIntegers = map square
+    splitOnComma = split ','
+    stringsToIntegers = map stringToInteger
+    squareIntegers = map square
 ```
 
 The definitions of these helper functions use partial function application (with prefix-like notation), which gives these helpers the following types:
@@ -173,8 +172,7 @@ Using function composition, we could also do
 
 ```
 input doTheThing
-    with
-        doTheThing = splitOnComma . stringsToIntegers . squareIntegers
+    doTheThing = splitOnComma . stringsToIntegers . squareIntegers
 ```
 
 ### Alleged ambiguities (and their resolution)
@@ -201,8 +199,7 @@ Function composition can be implemented as a function provided by the standard l
 ```
 fwdCompose : (a -> b), (b -> c) -> (a -> c)
 fwdCompose f g = composition
-    with
-        composition x = x f g
+    composition x = x f g
 ```
 
 (`a`, `b`, and `c` are type variables here, i.e., `fwdCompose` is a generic function.)
