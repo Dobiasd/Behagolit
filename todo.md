@@ -141,10 +141,6 @@ main = readLine work printLn
 # experiment with pipelines and non-unary functions
 
 
-Philosophy:
-- Expressions can only access other expressions defined after them. This encourages reading and writing code in a top-down approach. (Consequently, imports are found at the end of source files.)
-- Functions can have side effects. The list of possible side effects is part of the type of a function.
-
 outdated Philosophy:
 - No function composition / partial function application / point-free notation, because the code shall be explicit and parameters shall have names.
 
