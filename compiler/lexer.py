@@ -29,6 +29,16 @@ class Assignment(Token):
 
 
 @dataclass
+class ScopeOpen(Token):
+    pass
+
+
+@dataclass
+class ScopeClose(Token):
+    pass
+
+
+@dataclass
 class Semicolon(Token):
     pass
 
@@ -52,6 +62,14 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             continue
         if current() == ";":
             tokens.append(Semicolon())
+            progress()
+            continue
+        if current() == "{":
+            tokens.append(ScopeOpen())
+            progress()
+            continue
+        if current() == "}":
+            tokens.append(ScopeClose())
             progress()
             continue
         if current() in ["+", "-", "*", "/"]:
