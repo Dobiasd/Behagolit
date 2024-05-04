@@ -14,11 +14,6 @@ class Name(Token):
 
 
 @dataclass
-class Arrow(Token):
-    pass
-
-
-@dataclass
 class StringConstant(Token):
     value: str
 
@@ -59,7 +54,7 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             tokens.append(Semicolon())
             progress()
             continue
-        if current() in ["+", "*", "/"]:
+        if current() in ["+", "-", "*", "/"]:
             tokens.append(Name(current()))
             progress()
             continue
@@ -87,15 +82,6 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             tokens.append(StringConstant(acc))
             assert current() == "\""
             progress()
-            continue
-        if current() == "-":
-            first = current()
-            progress()
-            if current() == ">":
-                progress()
-                tokens.append(Arrow())
-            else:
-                tokens.append(Name(first))
             continue
         if current() == "=":
             acc = ""

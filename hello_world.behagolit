@@ -4,7 +4,7 @@ message = concat "Hello, world!" "\n" theAnswer
 
 theAnswer = tellFact "answer" fourtyTwoRepr
 
-tellFact = name value -> concat "The " name " is: " value
+tellFact name value = concat "The " name " is: " value
 
 fourtyTwoRepr = intToStr fourtyTwo
 
