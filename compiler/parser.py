@@ -1,10 +1,10 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional, Type, Sequence, Dict
+from typing import List, Optional, Type, Sequence, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
 from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose, \
-    BoolConstant, LeftParenthesis, RightParenthesis
+    BoolConstant, LeftParenthesis, RightParenthesis, Colon
 
 T = TypeVar('T')
 
@@ -48,6 +48,7 @@ class ConstantIntegerExpression(ConstantExpression):
 @dataclass
 class Parameter(Token):
     name: str
+    p_type: str
 
 
 @dataclass
@@ -58,6 +59,7 @@ class Call(Expression):
 
 @dataclass
 class Definition:
+    def_type: str
     params: List[Parameter]
     expression: Expression
 
@@ -109,6 +111,12 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
                 return Variable(current_and_progress(Name).value)
         raise RuntimeError(f"Wat: {curr}")
 
+    def parse_typed_name() -> Tuple[str, str,]:
+        def_name = current_and_progress(Name)
+        current_and_progress(Colon)
+        def_type = current_and_progress(Name)
+        return def_name.value, def_type.value
+
     last_defined_name: Optional[str] = None
     scope: List[str] = []
 
@@ -131,20 +139,21 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
             progress()
             continue
 
-        curr_name = current_and_progress(Name)
-        assert curr_name.value not in definitions
-        defined = curr_name
-        last_defined_name = defined.value
+        defined_name, defined_type = parse_typed_name()
+
+        assert defined_name not in definitions
+        last_defined_name = defined_name
 
         params: List[Parameter] = []
         while not isinstance(current(), Assignment):
-            params.append(Parameter(current_and_progress(Name).value))
+            param_name, param_type = parse_typed_name()
+            params.append(Parameter(param_name, param_type))
 
         current_and_progress(Assignment)
 
         expression = parse_expression()
 
-        add_definition(scope, defined.value, Definition(params, expression))
+        add_definition(scope, defined_name, Definition(defined_type, params, expression))
         progress()
 
     return definitions

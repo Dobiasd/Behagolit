@@ -61,6 +61,10 @@ class ScopeClose(Token):
 class Semicolon(Token):
     pass
 
+@dataclass
+class Colon(Token):
+    pass
+
 
 def lexer(augmented_source_orig: str) -> List[Token]:
     augmented_source: List[str] = [*augmented_source_orig]
@@ -81,6 +85,10 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             continue
         if current() == "(":
             tokens.append(LeftParenthesis())
+            progress()
+            continue
+        if current() == ":":
+            tokens.append(Colon())
             progress()
             continue
         if current() == ")":

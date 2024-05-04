@@ -85,8 +85,7 @@ def evaluate(ast: Dict[str, Definition], scope: List[str], expression: Expressio
         definition = ast.get(expression.function, None)
         evaluated_args = list(map(partial(evaluate, ast, scope), expression.args))
         if definition is not None:
-            param_names = list(map(lambda p: p.name, definition.params))
-            extension = dict(map(lambda n, a: (n, Definition([], a)), param_names, evaluated_args))
+            extension = dict(map(lambda p, a: (p.name, Definition(p.p_type, [], a)), definition.params, evaluated_args))
             extended_ast = ast | extension
             return evaluate(extended_ast, [expression.function], definition.expression)
         assert expression.function in builtin_functions

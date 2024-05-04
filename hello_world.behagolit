@@ -1,16 +1,16 @@
-main = printLine message
+main:None = printLine message
 
-message = concat "Hello, world!" "\n" answerSentence
+message:String = concat "Hello, world!" "\n" answerSentence
 
-answerSentence = tellFact "answer" theAnswer
+answerSentence:String = tellFact "answer" theAnswer
 
-theAnswer = ifElse True fourtyTwoRepr "No."
+theAnswer:String = ifElse True fourtyTwoRepr "No."
 
-tellFact name value = concat "The " name " is: " value
+tellFact:String name:String value:String = concat "The " name " is: " value
 
-fourtyTwoRepr = intToStr fourtyTwo
+fourtyTwoRepr:String = intToStr fourtyTwo
 
-fourtyTwo = * 2 twentyOne
-    twentyOne = fib 8
+fourtyTwo:Integer = * 2 twentyOne
+    twentyOne:Integer = fib 8
 
-fib n = ifElse (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))
+fib:Integer n:Integer = ifElse (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))
