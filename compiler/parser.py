@@ -28,7 +28,7 @@ class Variable(Expression):
 @dataclass
 class ConstantExpression(Expression):
     value: int | str
-    type_name: str = None
+    type_name: str = "None"
 
 
 @dataclass
