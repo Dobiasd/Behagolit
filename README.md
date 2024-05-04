@@ -1,4 +1,4 @@
-![logo](https://github.com/Dobiasd/behagolit/raw/master/logo/behagolit.png)
+![logo](https://github.com/Dobiasd/Behagolit/raw/master/logo/behagolit.png)
 
 [![CI](https://github.com/Dobiasd/undictify/workflows/ci/badge.svg)](https://github.com/Dobiasd/undictify/actions)
 [![(License MIT 1.0)](https://img.shields.io/badge/license-MIT%201.0-blue.svg)][license]
