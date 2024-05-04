@@ -10,6 +10,13 @@ tellFact name value = concat "The " name " is: " value
 
 fourtyTwoRepr = intToStr fourtyTwo
 
-fourtyTwo = + fourty two
-    fourty = * 4 10
-    two = 2
+fourtyTwo = * 2 twentyOne
+    twentyOne = fib 8
+
+fib n = ifElse isZeroOrOne n rec
+    isZeroOrOne = < n 2
+    rec = + rec1 rec2
+    rec1 = fib nMinus1
+    rec2 = fib nMinus2
+    nMinus1 = - n 1
+    nMinus2 = - n 2

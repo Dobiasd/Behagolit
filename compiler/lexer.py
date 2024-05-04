@@ -34,6 +34,11 @@ class Assignment(Token):
 
 
 @dataclass
+class EqualityCheck(Token):
+    pass
+
+
+@dataclass
 class ScopeOpen(Token):
     pass
 
@@ -77,13 +82,13 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             tokens.append(ScopeClose())
             progress()
             continue
-        if current() in ["+", "-", "*", "/"]:
+        if current() in ["+", "-", "*", "/", "%", "<", ">"]:
             tokens.append(Name(current()))
             progress()
             continue
         if current().isalpha():
             acc = ""
-            while not done() and current().isalpha():
+            while not done() and (current().isalnum()):
                 acc = acc + current()
                 progress()
             if acc in ["True", "False"]:
@@ -116,6 +121,8 @@ def lexer(augmented_source_orig: str) -> List[Token]:
                 progress()
             if acc == "=":
                 tokens.append(Assignment())
+            elif acc == "==":
+                tokens.append(EqualityCheck())
             else:
                 raise RuntimeError(f"Wat? {acc}")
             continue

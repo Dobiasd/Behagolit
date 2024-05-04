@@ -21,28 +21,40 @@ def int_to_str(number: ConstantIntegerExpression) -> ConstantStringExpression:
     return ConstantStringExpression(str(number.value))
 
 
-def add(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> ConstantIntegerExpression:
+def plus(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> ConstantIntegerExpression:
     return ConstantIntegerExpression(a.value + b.value)
+
+
+def minus(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> ConstantIntegerExpression:
+    return ConstantIntegerExpression(a.value - b.value)
 
 
 def multiply(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> ConstantIntegerExpression:
     return ConstantIntegerExpression(a.value * b.value)
 
 
-def if_else(cond: ConstantBoolExpression, a: Expression, b: Expression) -> Expression:
-    if cond.value:
-        return a
-    else:
-        return b
+def modulo(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> ConstantIntegerExpression:
+    return ConstantIntegerExpression(a.value * b.value)
+
+
+def less_than(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> ConstantBoolExpression:
+    return ConstantBoolExpression(a.value < b.value)
+
+
+def greater_than(a: ConstantIntegerExpression, b: ConstantIntegerExpression) -> ConstantBoolExpression:
+    return ConstantBoolExpression(a.value > b.value)
 
 
 builtin_functions = {
     "printLine": print_line,
     "concat": concat,
     "intToStr": int_to_str,
-    "+": add,
+    "+": plus,
+    "-": minus,
     "*": multiply,
-    "ifElse": if_else,
+    "%": modulo,
+    "<": less_than,
+    ">": greater_than,
 }
 
 
@@ -62,13 +74,21 @@ def evaluate(ast: Dict[str, Definition], scope: List[str], expression: Expressio
     if isinstance(expression, (ConstantBoolExpression | ConstantIntegerExpression | ConstantStringExpression)):
         return expression
     if isinstance(expression, Call):
+        if expression.function == "ifElse":
+            assert len(expression.args) == 3
+            cond = evaluate(ast, scope, expression.args[0])
+            assert isinstance(cond, ConstantBoolExpression)
+            if cond.value:
+                return evaluate(ast, scope, expression.args[1])
+            else:
+                return evaluate(ast, scope, expression.args[2])
         definition = ast.get(expression.function, None)
         evaluated_args = list(map(partial(evaluate, ast, scope), expression.args))
         if definition is not None:
             param_names = list(map(lambda p: p.name, definition.params))
             extension = dict(map(lambda n, a: (n, Definition([], a)), param_names, evaluated_args))
             extended_ast = ast | extension
-            return evaluate(extended_ast, scope, definition.expression)
+            return evaluate(extended_ast, [expression.function], definition.expression)
         assert expression.function in builtin_functions
         return builtin_functions[expression.function](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
