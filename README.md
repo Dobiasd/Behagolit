@@ -11,6 +11,9 @@ Behagolit
 **a toy programming language experiment**
 
 ## Philosophy
+- Everything is an expression. (with no statements, everything is immutable)
+- Functions are values too.
+- Values are lazily evaluated, like a functions taking zero arguments.
 - [Ubiquefix notation](Ubiquefix.md)
 - Expressions can only access other expressions defined after them. This encourages reading and writing code in a top-down approach. (Consequently, imports are found at the end of source files.)
 - Functions can have side effects. The list of possible side effects is part of the type of a function.
