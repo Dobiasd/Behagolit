@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Type, Sequence, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
-from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose, \
+from .lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose, \
     BoolConstant, LeftParenthesis, RightParenthesis, Colon
 
 T = TypeVar('T')

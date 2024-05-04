@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Dict, List, Optional
 
-from parser import Definition, ConstantStringExpression, ConstantIntegerExpression, Expression, Variable, \
+from .parser import Definition, ConstantStringExpression, ConstantIntegerExpression, Expression, Variable, \
     ConstantExpression, Call, ConstantBoolExpression
 
 

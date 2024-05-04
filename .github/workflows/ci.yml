@@ -14,4 +14,4 @@ jobs:
       - name: Test
         run: |
           find compiler -iname "*.py" | grep -v -e "__init__.py" | xargs -L 1 mypy --strict
-          python3 compiler/main.py
+          PYTHONPATH=. python3 test/main.py

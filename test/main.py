@@ -1,7 +1,7 @@
-from augmenter import augmenter
+from compiler.augmenter import augmenter
 from compiler.interpreter import interpret
-from lexer import lexer
-from parser import parser
+from compiler.lexer import lexer
+from compiler.parser import parser
 
 
 def main() -> None:
