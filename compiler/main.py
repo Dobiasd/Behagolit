@@ -10,13 +10,13 @@ def main() -> None:
     print(source)
 
     augmented_source = augmenter(source)
-    print(augmented_source)
+    print(f"{augmented_source=}")
 
     tokens = lexer(augmented_source)
-    print(tokens)
+    print(f"{tokens=}")
 
     ast = parser(tokens)
-    print(ast)
+    print(f"{ast=}")
 
     print("Running:")
     interpret(ast)
