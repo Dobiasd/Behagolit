@@ -81,7 +81,8 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
 
     def current_and_progress(cls: Type[T]) -> T:
         current_token = current()
-        assert MyTypeChecker[cls]().is_right_type(current_token)  # type: ignore
+        assert MyTypeChecker[cls]().is_right_type(  # type: ignore
+            current_token), f"Expecting {cls.__name__}, but got {type(current_token).__name__} instead."
         progress()
         return current_token  # type: ignore
 
