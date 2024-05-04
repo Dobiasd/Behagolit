@@ -3,7 +3,7 @@ name: ci
 on: [workflow_dispatch, push, pull_request]
 
 jobs:
-  build_gcc:
+  test:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@main
@@ -11,7 +11,7 @@ jobs:
         run: |
           sudo pip3 install --upgrade pip
           sudo pip3 install mypy pylint
-      - name: Build
+      - name: Test
         run: |
           find compiler -iname "*.py" | grep -v -e "__init__.py" | xargs -L 1 mypy --strict
           python3 compiler/main.py
