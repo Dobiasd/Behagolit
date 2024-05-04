@@ -70,6 +70,7 @@ def evaluate(ast: List[Definition], expression: Expression) -> ConstantExpressio
 def interpret(ast: List[Definition]) -> None:
     mains = list(filter(lambda d: d.name == "main", ast))
     assert len(mains) == 1
-    main = mains[0].expression
-    assert isinstance(main, Call)
-    evaluate(ast, main)
+    main = mains[0]
+    assert len(main.params) == 0
+    assert isinstance(main.expression, Call)
+    evaluate(ast, main.expression)
