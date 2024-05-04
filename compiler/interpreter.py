@@ -42,7 +42,7 @@ builtin_functions = {
     "intToStr": int_to_str,
     "+": add,
     "*": multiply,
-    "if": if_else,
+    "ifElse": if_else,
 }
 
 
