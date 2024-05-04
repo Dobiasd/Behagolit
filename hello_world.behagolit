@@ -9,7 +9,5 @@ tellFact name value = concat "The " name " is: " value
 fourtyTwoRepr = intToStr fourtyTwo
 
 fourtyTwo = + fourty two
-
-fourty = * 4 10
-
-two = 2
+    fourty = * 4 10
+    two = 2

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Type, Sequence, Dict
 from typing import TypeVar, Generic, Any
 
-from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon
+from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose
 
 T = TypeVar('T')
 
@@ -76,14 +76,35 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
     def progress() -> Token:
         return tokens.pop(0)
 
+    def add_definition(def_scope: List[str], name: str, definition: Definition) -> None:
+        definitions[".".join(def_scope + [name])] = definition
+
+    last_defined_name: Optional[str] = None
+    scope: List[str] = []
+
     while not done():
+        if isinstance(current(), ScopeOpen):
+            assert last_defined_name is not None
+            scope.append(last_defined_name)
+            progress()
+            continue
+
+        if isinstance(current(), ScopeClose):
+            assert last_defined_name is not None
+            scope.pop(-1)
+            if len(scope) == 0:
+                last_defined_name = None
+            progress()
+            continue
+
         if isinstance(current(), Semicolon):
             progress()
             continue
 
-        curr = current_and_progress(Name)
-        assert curr.value not in definitions
-        defined = curr
+        curr_name = current_and_progress(Name)
+        assert curr_name.value not in definitions
+        defined = curr_name
+        last_defined_name = defined.value
 
         params: List[Parameter] = []
         while not isinstance(current(), Assignment):
@@ -93,9 +114,9 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
 
         curr = current()
         if isinstance(curr, StringConstant):
-            definitions[defined.value] = Definition(params, ConstantStringExpression(curr.value))
+            add_definition(scope, defined.value, Definition(params, ConstantStringExpression(curr.value)))
         elif isinstance(curr, IntegerConstant):
-            definitions[defined.value] = Definition(params, ConstantIntegerExpression(curr.value))
+            add_definition(scope, defined.value, Definition(params, ConstantIntegerExpression(curr.value)))
         elif isinstance(curr, Name):
             func = current_and_progress(Name)
             args: List[Variable | ConstantStringExpression | ConstantIntegerExpression] = []
@@ -108,7 +129,7 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
                 if isinstance(current_arg, IntegerConstant):
                     args.append(ConstantIntegerExpression(current_arg.value))
                 progress()
-            definitions[defined.value] = Definition(params, Call(func.value, args))
+            add_definition(scope, defined.value, Definition(params, Call(func.value, args)))
         else:
             raise RuntimeError("Wat")
         progress()

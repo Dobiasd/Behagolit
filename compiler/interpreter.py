@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Dict
+from typing import Dict, List, Optional
 
 from parser import Definition, ConstantStringExpression, ConstantIntegerExpression, Expression, Variable, \
     ConstantExpression, Call
@@ -44,11 +44,16 @@ def replace_variable(replacements: Dict[str, Expression], expression: Expression
     return expression
 
 
-def evaluate(ast: Dict[str, Definition], expression: Expression) -> ConstantExpression:
+def fqn(scope: List[str], name: str) -> str:
+    scope_fqn = ".".join(scope)
+    return (scope_fqn + "." if len(scope_fqn) != 0 else "") + name
+
+
+def evaluate(ast: Dict[str, Definition], scope: List[str], expression: Expression) -> ConstantExpression:
     if isinstance(expression, (ConstantIntegerExpression | ConstantStringExpression)):
         return expression
     if isinstance(expression, Call):
-        evaluated_args = list(map(partial(evaluate, ast), expression.args))
+        evaluated_args = list(map(partial(evaluate, ast, scope), expression.args))
         definition = ast.get(expression.function, None)
         if definition is not None:
             param_names = list(map(lambda p: p.name, definition.params))
@@ -56,14 +61,21 @@ def evaluate(ast: Dict[str, Definition], expression: Expression) -> ConstantExpr
             call = definition.expression
             assert isinstance(call, Call)
             replaced_args = list(map(partial(replace_variable, arguments), call.args))
-            return evaluate(ast, Call(call.function, replaced_args))
+            return evaluate(ast, scope, Call(call.function, replaced_args))
         assert expression.function in builtin_functions
         return builtin_functions[expression.function](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
-        definition = ast.get(expression.name, None)
-        if not definition:
+        var_definition: Optional[Definition] = None
+        containing_scope: List[str] = []
+        for idx in range(len(scope), -1, -1):
+            scope_fqn = fqn(scope[:idx], expression.name)
+            var_definition = ast.get(scope_fqn, None)
+            if var_definition is not None:
+                containing_scope = scope[:idx]
+                break
+        if not var_definition:
             raise RuntimeError(f"No definition found for: {expression.name}")
-        return evaluate(ast, definition.expression)
+        return evaluate(ast, containing_scope + [expression.name], var_definition.expression)
     raise RuntimeError("Wat")
 
 
@@ -71,4 +83,4 @@ def interpret(ast: Dict[str, Definition]) -> None:
     main = ast["main"]
     assert len(main.params) == 0
     assert isinstance(main.expression, Call)
-    evaluate(ast, main.expression)
+    evaluate(ast, ["main"], main.expression)
