@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional, Type, Sequence
+from typing import List, Optional, Type, Sequence, Dict
 from typing import TypeVar, Generic, Any
 
 from lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon
@@ -52,20 +52,12 @@ class Call(Expression):
 
 @dataclass
 class Definition:
-    name: str
     params: List[Parameter]
     expression: Expression
 
 
-def get_definition(definitions: List[Definition], name: str) -> Optional[Definition]:
-    for definition in definitions:
-        if definition.name == name:
-            return definition
-    return None
-
-
-def parser(tokens: List[Token]) -> List[Definition]:
-    definitions: List[Definition] = []
+def parser(tokens: List[Token]) -> Dict[str, Definition]:
+    definitions: Dict[str, Definition] = {}
 
     def done() -> bool:
         return len(tokens) == 0
@@ -90,7 +82,7 @@ def parser(tokens: List[Token]) -> List[Definition]:
             continue
 
         curr = current_and_progress(Name)
-        assert get_definition(definitions, curr.value) is None
+        assert curr.value not in definitions
         defined = curr
 
         params: List[Parameter] = []
@@ -101,9 +93,9 @@ def parser(tokens: List[Token]) -> List[Definition]:
 
         curr = current()
         if isinstance(curr, StringConstant):
-            definitions.append(Definition(defined.value, params, ConstantStringExpression(curr.value)))
+            definitions[defined.value] = Definition(params, ConstantStringExpression(curr.value))
         elif isinstance(curr, IntegerConstant):
-            definitions.append(Definition(defined.value, params, ConstantIntegerExpression(curr.value)))
+            definitions[defined.value] = Definition(params, ConstantIntegerExpression(curr.value))
         elif isinstance(curr, Name):
             func = current_and_progress(Name)
             args: List[Variable | ConstantStringExpression | ConstantIntegerExpression] = []
@@ -116,7 +108,7 @@ def parser(tokens: List[Token]) -> List[Definition]:
                 if isinstance(current_arg, IntegerConstant):
                     args.append(ConstantIntegerExpression(current_arg.value))
                 progress()
-            definitions.append(Definition(defined.value, params, Call(func.value, args)))
+            definitions[defined.value] = Definition(params, Call(func.value, args))
         else:
             raise RuntimeError("Wat")
         progress()

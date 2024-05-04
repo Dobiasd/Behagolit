@@ -1,8 +1,8 @@
 from functools import partial
-from typing import List, Dict
+from typing import Dict
 
-from parser import Definition, Call, Expression, ConstantIntegerExpression, ConstantStringExpression, \
-    ConstantExpression, get_definition, Variable
+from parser import Definition, ConstantStringExpression, ConstantIntegerExpression, Expression, Variable, \
+    ConstantExpression, Call
 
 
 def print_line(text: ConstantStringExpression) -> None:
@@ -44,12 +44,12 @@ def replace_variable(replacements: Dict[str, Expression], expression: Expression
     return expression
 
 
-def evaluate(ast: List[Definition], expression: Expression) -> ConstantExpression:
+def evaluate(ast: Dict[str, Definition], expression: Expression) -> ConstantExpression:
     if isinstance(expression, (ConstantIntegerExpression | ConstantStringExpression)):
         return expression
     if isinstance(expression, Call):
         evaluated_args = list(map(partial(evaluate, ast), expression.args))
-        definition = get_definition(ast, expression.function)
+        definition = ast.get(expression.function, None)
         if definition is not None:
             param_names = list(map(lambda p: p.name, definition.params))
             arguments = dict(zip(param_names, evaluated_args))
@@ -60,17 +60,15 @@ def evaluate(ast: List[Definition], expression: Expression) -> ConstantExpressio
         assert expression.function in builtin_functions
         return builtin_functions[expression.function](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
-        definition = get_definition(ast, expression.name)
+        definition = ast.get(expression.name, None)
         if not definition:
             raise RuntimeError(f"No definition found for: {expression.name}")
         return evaluate(ast, definition.expression)
     raise RuntimeError("Wat")
 
 
-def interpret(ast: List[Definition]) -> None:
-    mains = list(filter(lambda d: d.name == "main", ast))
-    assert len(mains) == 1
-    main = mains[0]
+def interpret(ast: Dict[str, Definition]) -> None:
+    main = ast["main"]
     assert len(main.params) == 0
     assert isinstance(main.expression, Call)
     evaluate(ast, main.expression)
