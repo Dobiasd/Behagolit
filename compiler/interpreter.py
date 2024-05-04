@@ -2,7 +2,7 @@ from functools import partial
 from typing import Dict, List, Optional
 
 from .parser import Definition, ConstantStringExpression, ConstantIntegerExpression, Expression, Variable, \
-    ConstantExpression, Call, ConstantBoolExpression
+    ConstantExpression, Call, ConstantBoolExpression, TypeSignaturePlain, TypeSignature
 
 
 def print_line(text: ConstantStringExpression) -> None:
@@ -69,34 +69,36 @@ def fqn(scope: List[str], name: str) -> str:
     scope_fqn = ".".join(scope)
     return (scope_fqn + "." if len(scope_fqn) != 0 else "") + name
 
+
 def raise_type_error(expected: str, given: str) -> None:
     raise RuntimeError(f"Incorrect type. {given} given. {expected} wanted.")
-def assert_types_match(type_name: str, expression: ConstantExpression) -> None:
-    if not isinstance(expression,
-                      {"Integer": ConstantIntegerExpression,
-                       "String": ConstantStringExpression,
-                       "Boolean": ConstantBoolExpression,
-                       }[type_name]):
-        raise_type_error(type_name, expression.type_name)
 
 
-def evaluate(ast: Dict[str, Definition], scope: List[str], target_type: str,
+def assert_types_match(target_type: TypeSignature, expression: ConstantExpression) -> None:
+    # todo: support more complex type signatures
+    assert isinstance(target_type, TypeSignaturePlain)
+    if expression.type_name != target_type:
+        raise_type_error(target_type.name, expression.type_name.name)
+
+
+def evaluate(ast: Dict[str, Definition], scope: List[str], target_type: TypeSignature,
              expression: Expression) -> ConstantExpression:
     if isinstance(expression, ConstantExpression):
-        if target_type != "None":
+        if target_type != TypeSignaturePlain("None"):
+            assert isinstance(target_type, TypeSignaturePlain)
             assert_types_match(target_type, expression)
         return expression
     if isinstance(expression, Call):
         if expression.function == "ifElse":
             assert len(expression.args) == 3
-            cond = evaluate(ast, scope, "Boolean", expression.args[0])
+            cond = evaluate(ast, scope, TypeSignaturePlain("Boolean"), expression.args[0])
             assert isinstance(cond, ConstantBoolExpression)
             if cond.value:
                 return evaluate(ast, scope, target_type, expression.args[1])
             else:
                 return evaluate(ast, scope, target_type, expression.args[2])
         definition = ast.get(expression.function, None)
-        evaluated_args = list(map(partial(evaluate, ast, scope, "None"), expression.args))
+        evaluated_args = list(map(partial(evaluate, ast, scope, TypeSignaturePlain("None")), expression.args))
         if definition is not None:
             for param, arg in zip(definition.params, evaluated_args):
                 assert_types_match(param.p_type, arg)
@@ -116,7 +118,7 @@ def evaluate(ast: Dict[str, Definition], scope: List[str], target_type: str,
                 break
         if not var_definition:
             raise RuntimeError(f"No definition found for: {expression.name}")
-        return evaluate(ast, containing_scope + [expression.name], var_definition.def_type, var_definition.expression)  # todo
+        return evaluate(ast, containing_scope + [expression.name], var_definition.def_type, var_definition.expression)
     raise RuntimeError("Wat")
 
 
@@ -124,4 +126,4 @@ def interpret(ast: Dict[str, Definition]) -> None:
     main = ast["main"]
     assert len(main.params) == 0
     assert isinstance(main.expression, Call)
-    evaluate(ast, ["main"], "None", main.expression)
+    evaluate(ast, ["main"], TypeSignaturePlain("None"), main.expression)

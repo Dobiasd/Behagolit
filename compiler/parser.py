@@ -16,6 +16,22 @@ class MyTypeChecker(Generic[T]):
 
 
 @dataclass
+class TypeSignature(ABC):
+    pass
+
+
+@dataclass
+class TypeSignaturePlain(TypeSignature):
+    name: str
+
+
+@dataclass
+class TypeSignatureFunction(TypeSignature):
+    params: List[TypeSignature]
+    return_type: TypeSignature
+
+
+@dataclass
 class Expression(ABC):
     pass
 
@@ -28,31 +44,31 @@ class Variable(Expression):
 @dataclass
 class ConstantExpression(Expression):
     value: int | str
-    type_name: str = "None"
+    type_name = TypeSignaturePlain("None")
 
 
 @dataclass
 class ConstantBoolExpression(ConstantExpression):
     value: bool
-    type_name: str = "Boolean"
+    type_name = TypeSignaturePlain("Boolean")
 
 
 @dataclass
 class ConstantStringExpression(ConstantExpression):
     value: str
-    type_name: str = "String"
+    type_name = TypeSignaturePlain("String")
 
 
 @dataclass
 class ConstantIntegerExpression(ConstantExpression):
     value: int
-    type_name: str = "Integer"
+    type_name = TypeSignaturePlain("Integer")
 
 
 @dataclass
 class Parameter(Token):
     name: str
-    p_type: str
+    p_type: TypeSignature
 
 
 @dataclass
@@ -63,9 +79,15 @@ class Call(Expression):
 
 @dataclass
 class Definition:
-    def_type: str
+    def_type: TypeSignature
     params: List[Parameter]
     expression: Expression
+
+
+def parse_type_signature(type_sig_tokens: List[Token]) -> TypeSignature:
+    first = type_sig_tokens[0]
+    assert isinstance(first, Name)
+    return TypeSignaturePlain(first.value)
 
 
 def parser(tokens: List[Token]) -> Dict[str, Definition]:
@@ -77,6 +99,11 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
     def current() -> Optional[Token]:
         if len(tokens) == 0:
             return None
+        return tokens[0]
+
+    def current_not_None() -> Token:
+        if len(tokens) == 0:
+            raise RuntimeError("No token left.")
         return tokens[0]
 
     def current_and_progress(cls: Type[T]) -> T:
@@ -116,11 +143,24 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
                 return Variable(current_and_progress(Name).value)
         raise RuntimeError(f"Wat: {curr}")
 
-    def parse_typed_name() -> Tuple[str, str,]:
+    def parse_typed_name() -> Tuple[str, TypeSignature]:
         def_name = current_and_progress(Name)
         current_and_progress(Colon)
-        def_type = current_and_progress(Name)
-        return def_name.value, def_type.value
+        if isinstance(current(), LeftParenthesis):
+            type_sig_tokens = []
+            open = 1
+            while open > 0:
+                type_sig_tokens.append(current_not_None())
+                progress()
+                if isinstance(current(), LeftParenthesis):
+                    open += 1
+                if isinstance(current(), RightParenthesis):
+                    open -= 1
+            progress()
+        else:
+            type_sig_tokens = [current_and_progress(Name)]
+        def_type = parse_type_signature(type_sig_tokens)
+        return def_name.value, def_type
 
     last_defined_name: Optional[str] = None
     scope: List[str] = []
