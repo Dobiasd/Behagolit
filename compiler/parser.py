@@ -1,6 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional, Type, Sequence, Dict, Tuple
+from enum import StrEnum
+from typing import List, Optional, Type, Sequence, Dict, Tuple, Union
 from typing import TypeVar, Generic, Any
 
 from .lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose, \
@@ -15,14 +16,26 @@ class MyTypeChecker(Generic[T]):
         return isinstance(x, self.__orig_class__.__args__[0])  # type: ignore
 
 
+class PlainType(StrEnum):
+    INTEGER = "Integer"
+    STRING = "String"
+    BOOLEAN = "Boolean"
+    NONE = "None"
+
+
 @dataclass
 class TypeSignature(ABC):
     pass
 
 
 @dataclass
+class TypeSignatureUnknown(TypeSignature):
+    pass
+
+
+@dataclass
 class TypeSignaturePlain(TypeSignature):
-    name: str
+    plain_type: PlainType
 
 
 @dataclass
@@ -33,47 +46,49 @@ class TypeSignatureFunction(TypeSignature):
 
 @dataclass
 class Expression(ABC):
-    pass
+    type_sig: TypeSignature
 
 
 @dataclass
 class Variable(Expression):
+    type_sig: TypeSignature
     name: str
 
 
 @dataclass
 class ConstantExpression(Expression):
-    value: int | str
-    type_name = TypeSignaturePlain("None")
+    type_sig: TypeSignaturePlain
+    value: Union[str, int, bool]
 
 
-@dataclass
-class ConstantBoolExpression(ConstantExpression):
-    value: bool
-    type_name = TypeSignaturePlain("Boolean")
+def get_const_int(exp: ConstantExpression) -> int:
+    assert exp.type_sig == TypeSignaturePlain(PlainType.INTEGER)
+    assert isinstance(exp.value, int)
+    return exp.value
 
 
-@dataclass
-class ConstantStringExpression(ConstantExpression):
-    value: str
-    type_name = TypeSignaturePlain("String")
+def get_const_str(exp: ConstantExpression) -> str:
+    assert exp.type_sig == TypeSignaturePlain(PlainType.STRING)
+    assert isinstance(exp.value, str)
+    return exp.value
 
 
-@dataclass
-class ConstantIntegerExpression(ConstantExpression):
-    value: int
-    type_name = TypeSignaturePlain("Integer")
+def get_const_bool(exp: ConstantExpression) -> bool:
+    assert exp.type_sig == TypeSignaturePlain(PlainType.BOOLEAN)
+    assert isinstance(exp.value, bool)
+    return exp.value
 
 
 @dataclass
 class Parameter(Token):
+    type_sig: TypeSignature
     name: str
-    p_type: TypeSignature
 
 
 @dataclass
 class Call(Expression):
-    function: str
+    type_sig: TypeSignature
+    function_name: str
     args: Sequence[Expression]
 
 
@@ -85,9 +100,10 @@ class Definition:
 
 
 def parse_type_signature(type_sig_tokens: List[Token]) -> TypeSignature:
+    assert len(type_sig_tokens) == 1
     first = type_sig_tokens[0]
     assert isinstance(first, Name)
-    return TypeSignaturePlain(first.value)
+    return TypeSignaturePlain(PlainType[first.value.upper()])
 
 
 def parser(tokens: List[Token]) -> Dict[str, Definition]:
@@ -127,20 +143,21 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
             current_and_progress(RightParenthesis)
             return res
         if isinstance(curr, StringConstant):
-            return ConstantStringExpression(current_and_progress(StringConstant).value)
+            return ConstantExpression(TypeSignaturePlain(PlainType.STRING), current_and_progress(StringConstant).value)
         if isinstance(curr, BoolConstant):
-            return ConstantBoolExpression(current_and_progress(BoolConstant).value)
+            return ConstantExpression(TypeSignaturePlain(PlainType.BOOLEAN), current_and_progress(BoolConstant).value)
         if isinstance(curr, IntegerConstant):
-            return ConstantIntegerExpression(current_and_progress(IntegerConstant).value)
+            return ConstantExpression(TypeSignaturePlain(PlainType.INTEGER),
+                                      current_and_progress(IntegerConstant).value)
         if isinstance(curr, Name):
             if calls:
                 func = current_and_progress(Name)
                 args: List[Expression] = []
                 while not isinstance(current(), (Semicolon, RightParenthesis)):
                     args.append(parse_expression(False))
-                return Call(func.value, args)
+                return Call(TypeSignatureUnknown(), func.value, args)
             else:
-                return Variable(current_and_progress(Name).value)
+                return Variable(TypeSignatureUnknown(), current_and_progress(Name).value)
         raise RuntimeError(f"Wat: {curr}")
 
     def parse_typed_name() -> Tuple[str, TypeSignature]:
@@ -192,7 +209,7 @@ def parser(tokens: List[Token]) -> Dict[str, Definition]:
         params: List[Parameter] = []
         while not isinstance(current(), Assignment):
             param_name, param_type = parse_typed_name()
-            params.append(Parameter(param_name, param_type))
+            params.append(Parameter(param_type, param_name))
 
         current_and_progress(Assignment)
 
