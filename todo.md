@@ -1,6 +1,8 @@
 # todo
 
+- type aliases
 - higher-order functions
+- show code example in readme
 - traits/interfaces
 - structs
 - enforce elm architecture?
