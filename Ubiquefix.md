@@ -162,8 +162,8 @@ The definitions of these helper functions use partial function application (with
 
 ```
 splitOnComma : String -> List[String]
-stringsToIntegers = List[String] -> List[Integer]
-squareIntegers = List[Integer] -> Integer
+stringsToIntegers : List[String] -> List[Integer]
+squareIntegers : List[Integer] -> Integer
 ```
 
 The pipeline itself (`input splitOnComma stringsToIntegers squareIntegers`) uses the postfix-notation style to let the data flow from left to right through the listed functions.
@@ -197,8 +197,7 @@ In case neither direction is valid, it's just a type error.
 Function composition can be implemented as a function provided by the standard library:
 
 ```
-fwdCompose : (a -> b), (b -> c) -> (a -> c)
-fwdCompose f g = composition
+fwdCompose:(a->c) f:(a->b) g:(b->c) = composition
     composition x = x f g
 ```
 
