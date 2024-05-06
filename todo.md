@@ -39,7 +39,6 @@
 - integer literals mit separator schreiben können: 1_234_562
 - floats und double wie in IEEE-754, float32, float64
 - easily create new types to avoid boolean blindness: https://github.com/quchen/articles/blob/master/algebraic-blindness.md https://softwareengineering.stackexchange.com/a/147983/104636
-- support comments
 - allow trailing comma in enumerations such as argument and parameter lists, also leading commas?
 - compiler targets: php, c (llvm), JS (/webasm)
 - units-of-measure like in F#: https://fsharpforfunandprofit.com/posts/units-of-measure/

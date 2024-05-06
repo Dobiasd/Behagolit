@@ -5,6 +5,7 @@ def augmenter(source: str) -> str:
     for line in lines:
         if "\t" in line:
             raise RuntimeError("No tabs allowed.")
+        line = line.split("#")[0]
         indentation_spaces = 0
         for p in range(len(line)):
             if line[p] != " ":

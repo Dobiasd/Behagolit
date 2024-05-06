@@ -16,3 +16,17 @@ fourtyTwo:Integer = + fourteen (+ 15 thirteen)
 fib:Integer n:Integer = ifElse (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))
 
 fourteen:Integer = 14
+
+# struct IntListElem = head:Integer, tail:IntList
+
+# union IntList = None | IntListElem
+
+# xs:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 None))
+
+# fourteen:Integer = sum (xs map square)
+
+# sum:Integer xs:IntList = fold
+
+# map:IntList xs:IntList f:(Integer->Integer) = ifElse (xs == None) None (IntListElem (f (head xs)) (map f (tail xs)))
+
+# foldr:Integer f:(Integer->Integer->Integer) acc:Integer xs:IntList = ifElse (xs == None) acc (f (head xs) (foldr f acc (tail xs)))
