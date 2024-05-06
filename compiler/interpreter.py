@@ -2,7 +2,7 @@ from functools import partial
 from typing import Dict, List, Optional
 
 from .parser import Definition, Expression, Variable, \
-    ConstantExpression, Call, TypeSignaturePlain, TypeSignature, PlainType, get_const_str, get_const_int
+    ConstantExpression, Call, TypeSignaturePlain, TypeSignature, PlainType, get_const_str, get_const_int, Struct
 
 
 def print_line(text: ConstantExpression) -> None:
@@ -76,37 +76,42 @@ def raise_type_error(expected: str, given: str) -> None:
 
 
 def assert_types_match(target_type: TypeSignature, expression: ConstantExpression) -> None:
-    # todo: support more complex type signatures
     assert isinstance(target_type, TypeSignaturePlain)
+    assert isinstance(expression.type_sig, TypeSignaturePlain)
     if expression.type_sig != target_type:
         raise_type_error(target_type.plain_type, expression.type_sig.plain_type)
 
 
-def evaluate(ast: Dict[str, Definition], scope: List[str], target_type: TypeSignature,
+def evaluate(ast: Dict[str, Definition],
+             custom_struct_types: Dict[str, Struct],
+             scope: List[str],
+             target_type: TypeSignature,
              expression: Expression) -> ConstantExpression:
     if isinstance(expression, ConstantExpression):
         if target_type != TypeSignaturePlain(PlainType.NONE):
-            assert isinstance(target_type, TypeSignaturePlain)
             assert_types_match(target_type, expression)
         return expression
     if isinstance(expression, Call):
         if expression.function_name == "ifElse":
             assert len(expression.args) == 3
-            cond = evaluate(ast, scope, TypeSignaturePlain(PlainType.BOOLEAN), expression.args[0])
+            cond = evaluate(ast, custom_struct_types, scope, TypeSignaturePlain(PlainType.BOOLEAN), expression.args[0])
             assert cond.type_sig == TypeSignaturePlain(PlainType.BOOLEAN)
             if cond.value:
-                return evaluate(ast, scope, target_type, expression.args[1])
+                return evaluate(ast, custom_struct_types, scope, target_type, expression.args[1])
             else:
-                return evaluate(ast, scope, target_type, expression.args[2])
+                return evaluate(ast, custom_struct_types, scope, target_type, expression.args[2])
         definition = ast.get(expression.function_name, None)
-        evaluated_args = list(map(partial(evaluate, ast, scope, TypeSignaturePlain(PlainType.NONE)), expression.args))
+        evaluated_args = list(
+            map(partial(evaluate, ast, custom_struct_types, scope, TypeSignaturePlain(PlainType.NONE)),
+                expression.args))
         if definition is not None:
             for param, arg in zip(definition.params, evaluated_args):
                 assert_types_match(param.type_sig, arg)
             extension = dict(
                 map(lambda p, a: (p.name, Definition(p.type_sig, [], a)), definition.params, evaluated_args))
             extended_ast = ast | extension
-            return evaluate(extended_ast, [expression.function_name], definition.def_type, definition.expression)
+            return evaluate(extended_ast, custom_struct_types, [expression.function_name], definition.def_type,
+                            definition.expression)
         assert expression.function_name in builtin_functions
         return builtin_functions[expression.function_name](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
@@ -120,12 +125,13 @@ def evaluate(ast: Dict[str, Definition], scope: List[str], target_type: TypeSign
                 break
         if not var_definition:
             raise RuntimeError(f"No definition found for: {expression.name}")
-        return evaluate(ast, containing_scope + [expression.name], var_definition.def_type, var_definition.expression)
+        return evaluate(ast, custom_struct_types, containing_scope + [expression.name], var_definition.def_type,
+                        var_definition.expression)
     raise RuntimeError("Wat")
 
 
-def interpret(ast: Dict[str, Definition]) -> None:
+def interpret(ast: Dict[str, Definition], custom_struct_types: Dict[str, Struct]) -> None:
     main = ast["main"]
     assert len(main.params) == 0
     assert isinstance(main.expression, Call)
-    evaluate(ast, ["main"], TypeSignaturePlain(PlainType.NONE), main.expression)
+    evaluate(ast, custom_struct_types, ["main"], TypeSignaturePlain(PlainType.NONE), main.expression)

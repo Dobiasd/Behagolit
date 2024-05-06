@@ -17,7 +17,7 @@ fib:Integer n:Integer = ifElse (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))
 
 fourteen:Integer = 14
 
-# struct IntListElem = head:Integer, tail:IntList
+# IntListElem := struct head:Integer tail:IntList
 
 # union IntList = None | IntListElem
 
