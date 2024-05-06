@@ -10,7 +10,9 @@ tellFact:String name:String value:String = concat "The " name " is: " value
 
 fourtyTwoRepr:String = intToStr fourtyTwo
 
-fourtyTwo:Integer = * 2 twentyOne
-    twentyOne:Integer = fib 8
+fourtyTwo:Integer = + fourteen (+ 15 thirteen)
+    thirteen:Integer = fib 7
 
 fib:Integer n:Integer = ifElse (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))
+
+fourteen:Integer = 14
