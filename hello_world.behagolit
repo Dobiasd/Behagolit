@@ -15,7 +15,15 @@ fourtyTwo:Integer = + fourteen (+ 15 thirteen)
 
 fib:Integer n:Integer = ifElse (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))
 
-fourteen:Integer = 14
+fourteen:Integer = + thirteen one
+
+thirteen:Integer = + (* 10 (TwoDigitNumber.tens weirdThirteen)) (TwoDigitNumber.ones weirdThirteen)
+
+one:Integer = 1
+
+TwoDigitNumber := struct tens:Integer ones:Integer
+
+weirdThirteen:TwoDigitNumber = TwoDigitNumber 1 3
 
 # IntListElem := struct head:Integer tail:IntList
 

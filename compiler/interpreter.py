@@ -1,49 +1,50 @@
 from functools import partial
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from .parser import Definition, Expression, Variable, \
-    ConstantExpression, Call, TypeSignaturePlain, TypeSignature, PlainType, get_const_str, get_const_int, Struct
+    ConstantPlainExpression, Call, TypeSignaturePlain, TypeSignature, PlainType, get_const_str, get_const_int, Struct, \
+    ConstantStructExpression, TypeSignatureCustom, ConstantExpression
 
 
-def print_line(text: ConstantExpression) -> None:
+def print_line(text: ConstantPlainExpression) -> None:
     assert text.type_sig == TypeSignaturePlain(PlainType.STRING)
     print(text.value)
 
 
-def concat(*args: ConstantExpression) -> ConstantExpression:
-    def get_value(exp: ConstantExpression) -> str:
+def concat(*args: ConstantPlainExpression) -> ConstantPlainExpression:
+    def get_value(exp: ConstantPlainExpression) -> str:
         return get_const_str(exp)
 
     arg_values = list(map(get_value, args))
-    return ConstantExpression(TypeSignaturePlain(PlainType.STRING), "".join(arg_values))
+    return ConstantPlainExpression(TypeSignaturePlain(PlainType.STRING), "".join(arg_values))
 
 
-def int_to_str(number: ConstantExpression) -> ConstantExpression:
-    return ConstantExpression(TypeSignaturePlain(PlainType.STRING), str(get_const_int(number)))
+def int_to_str(number: ConstantPlainExpression) -> ConstantPlainExpression:
+    return ConstantPlainExpression(TypeSignaturePlain(PlainType.STRING), str(get_const_int(number)))
 
 
-def plus(a: ConstantExpression, b: ConstantExpression) -> ConstantExpression:
-    return ConstantExpression(TypeSignaturePlain(PlainType.INTEGER), get_const_int(a) + get_const_int(b))
+def plus(a: ConstantPlainExpression, b: ConstantPlainExpression) -> ConstantPlainExpression:
+    return ConstantPlainExpression(TypeSignaturePlain(PlainType.INTEGER), get_const_int(a) + get_const_int(b))
 
 
-def minus(a: ConstantExpression, b: ConstantExpression) -> ConstantExpression:
-    return ConstantExpression(TypeSignaturePlain(PlainType.INTEGER), get_const_int(a) - get_const_int(b))
+def minus(a: ConstantPlainExpression, b: ConstantPlainExpression) -> ConstantPlainExpression:
+    return ConstantPlainExpression(TypeSignaturePlain(PlainType.INTEGER), get_const_int(a) - get_const_int(b))
 
 
-def multiply(a: ConstantExpression, b: ConstantExpression) -> ConstantExpression:
-    return ConstantExpression(TypeSignaturePlain(PlainType.INTEGER), get_const_int(a) * get_const_int(b))
+def multiply(a: ConstantPlainExpression, b: ConstantPlainExpression) -> ConstantPlainExpression:
+    return ConstantPlainExpression(TypeSignaturePlain(PlainType.INTEGER), get_const_int(a) * get_const_int(b))
 
 
-def modulo(a: ConstantExpression, b: ConstantExpression) -> ConstantExpression:
-    return ConstantExpression(TypeSignaturePlain(PlainType.INTEGER), get_const_int(a) * get_const_int(b))
+def modulo(a: ConstantPlainExpression, b: ConstantPlainExpression) -> ConstantPlainExpression:
+    return ConstantPlainExpression(TypeSignaturePlain(PlainType.INTEGER), get_const_int(a) * get_const_int(b))
 
 
-def less_than(a: ConstantExpression, b: ConstantExpression) -> ConstantExpression:
-    return ConstantExpression(TypeSignaturePlain(PlainType.BOOLEAN), get_const_int(a) < get_const_int(b))
+def less_than(a: ConstantPlainExpression, b: ConstantPlainExpression) -> ConstantPlainExpression:
+    return ConstantPlainExpression(TypeSignaturePlain(PlainType.BOOLEAN), get_const_int(a) < get_const_int(b))
 
 
-def greater_than(a: ConstantExpression, b: ConstantExpression) -> ConstantExpression:
-    return ConstantExpression(TypeSignaturePlain(PlainType.BOOLEAN), get_const_int(a) > get_const_int(b))
+def greater_than(a: ConstantPlainExpression, b: ConstantPlainExpression) -> ConstantPlainExpression:
+    return ConstantPlainExpression(TypeSignaturePlain(PlainType.BOOLEAN), get_const_int(a) > get_const_int(b))
 
 
 builtin_functions = {
@@ -75,7 +76,7 @@ def raise_type_error(expected: str, given: str) -> None:
     raise RuntimeError(f"Incorrect type. {given} given. {expected} wanted.")
 
 
-def assert_types_match(target_type: TypeSignature, expression: ConstantExpression) -> None:
+def assert_types_match(target_type: TypeSignature, expression: ConstantPlainExpression) -> None:
     assert isinstance(target_type, TypeSignaturePlain)
     assert isinstance(expression.type_sig, TypeSignaturePlain)
     if expression.type_sig != target_type:
@@ -84,35 +85,46 @@ def assert_types_match(target_type: TypeSignature, expression: ConstantExpressio
 
 def evaluate(ast: Dict[str, Definition],
              custom_struct_types: Dict[str, Struct],
+             getters: Dict[str, Any],
              scope: List[str],
              target_type: TypeSignature,
              expression: Expression) -> ConstantExpression:
-    if isinstance(expression, ConstantExpression):
+    if isinstance(expression, ConstantPlainExpression):
         if target_type != TypeSignaturePlain(PlainType.NONE):
             assert_types_match(target_type, expression)
         return expression
     if isinstance(expression, Call):
         if expression.function_name == "ifElse":
             assert len(expression.args) == 3
-            cond = evaluate(ast, custom_struct_types, scope, TypeSignaturePlain(PlainType.BOOLEAN), expression.args[0])
+            cond = evaluate(ast, custom_struct_types, getters, scope, TypeSignaturePlain(PlainType.BOOLEAN),
+                            expression.args[0])
             assert cond.type_sig == TypeSignaturePlain(PlainType.BOOLEAN)
             if cond.value:
-                return evaluate(ast, custom_struct_types, scope, target_type, expression.args[1])
+                return evaluate(ast, custom_struct_types, getters, scope, target_type, expression.args[1])
             else:
-                return evaluate(ast, custom_struct_types, scope, target_type, expression.args[2])
-        definition = ast.get(expression.function_name, None)
+                return evaluate(ast, custom_struct_types, getters, scope, target_type, expression.args[2])
         evaluated_args = list(
-            map(partial(evaluate, ast, custom_struct_types, scope, TypeSignaturePlain(PlainType.NONE)),
+            map(partial(evaluate, ast, custom_struct_types, getters, scope, TypeSignaturePlain(PlainType.NONE)),
                 expression.args))
+        definition = ast.get(expression.function_name, None)
         if definition is not None:
             for param, arg in zip(definition.params, evaluated_args):
                 assert_types_match(param.type_sig, arg)
             extension = dict(
                 map(lambda p, a: (p.name, Definition(p.type_sig, [], a)), definition.params, evaluated_args))
             extended_ast = ast | extension
-            return evaluate(extended_ast, custom_struct_types, [expression.function_name], definition.def_type,
+            return evaluate(extended_ast, custom_struct_types, getters, [expression.function_name], definition.def_type,
                             definition.expression)
-        assert expression.function_name in builtin_functions
+        custom_struct = custom_struct_types.get(expression.function_name, None)
+        if custom_struct is not None:
+            field_names = [f.name for f in custom_struct.fields]
+            return ConstantStructExpression(TypeSignatureCustom(expression.function_name),
+                                            dict(zip(field_names, evaluated_args)))
+        getter = getters.get(expression.function_name, None)
+        if getter is not None:
+            assert len(evaluated_args) == 1
+            return getter(evaluated_args[0].value)
+        assert expression.function_name in builtin_functions, f"Wat? {expression.function_name}"
         return builtin_functions[expression.function_name](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
         var_definition: Optional[Definition] = None
@@ -125,13 +137,14 @@ def evaluate(ast: Dict[str, Definition],
                 break
         if not var_definition:
             raise RuntimeError(f"No definition found for: {expression.name}")
-        return evaluate(ast, custom_struct_types, containing_scope + [expression.name], var_definition.def_type,
+        return evaluate(ast, custom_struct_types, getters, containing_scope + [expression.name],
+                        var_definition.def_type,
                         var_definition.expression)
     raise RuntimeError("Wat")
 
 
-def interpret(ast: Dict[str, Definition], custom_struct_types: Dict[str, Struct]) -> None:
+def interpret(ast: Dict[str, Definition], custom_struct_types: Dict[str, Struct], getters: Dict[str, Any]) -> None:
     main = ast["main"]
     assert len(main.params) == 0
     assert isinstance(main.expression, Call)
-    evaluate(ast, custom_struct_types, ["main"], TypeSignaturePlain(PlainType.NONE), main.expression)
+    evaluate(ast, custom_struct_types, getters, ["main"], TypeSignaturePlain(PlainType.NONE), main.expression)

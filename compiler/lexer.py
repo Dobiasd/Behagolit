@@ -123,7 +123,7 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             continue
         if current().isalpha():
             acc = ""
-            while not done() and (current().isalnum()):
+            while not done() and (current().isalnum() or current() == "."):
                 acc = acc + current()
                 progress()
             if acc in ["True", "False"]:

@@ -1,6 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
 from enum import StrEnum
+from operator import itemgetter
 from typing import List, Optional, Type, Sequence, Dict, Tuple, Union
 from typing import TypeVar, Generic, Any
 
@@ -67,23 +68,34 @@ class Struct(TypeSignature):
 
 @dataclass
 class ConstantExpression(Expression):
+    pass
+
+
+@dataclass
+class ConstantPlainExpression(ConstantExpression):
     type_sig: TypeSignaturePlain
     value: Union[str, int, bool]
 
 
-def get_const_int(exp: ConstantExpression) -> int:
+@dataclass
+class ConstantStructExpression(ConstantExpression):
+    type_sig: TypeSignature
+    value: Any
+
+
+def get_const_int(exp: ConstantPlainExpression) -> int:
     assert exp.type_sig == TypeSignaturePlain(PlainType.INTEGER)
     assert isinstance(exp.value, int)
     return exp.value
 
 
-def get_const_str(exp: ConstantExpression) -> str:
+def get_const_str(exp: ConstantPlainExpression) -> str:
     assert exp.type_sig == TypeSignaturePlain(PlainType.STRING)
     assert isinstance(exp.value, str)
     return exp.value
 
 
-def get_const_bool(exp: ConstantExpression) -> bool:
+def get_const_bool(exp: ConstantPlainExpression) -> bool:
     assert exp.type_sig == TypeSignaturePlain(PlainType.BOOLEAN)
     assert isinstance(exp.value, bool)
     return exp.value
@@ -119,9 +131,10 @@ def parse_type_signature(type_sig_tokens: List[Token]) -> TypeSignature:
         return TypeSignatureCustom(first.value)
 
 
-def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct]]:
+def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Any]]:
     definitions: Dict[str, Definition] = {}
     custom_struct_types: Dict[str, Struct] = {}
+    getters: Dict[str, Any] = {}
 
     def done() -> bool:
         return len(tokens) == 0
@@ -149,9 +162,11 @@ def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct
     def add_definition(def_scope: List[str], name: str, definition: Definition) -> None:
         definitions[".".join(def_scope + [name])] = definition
 
-    def add_custom_struct_type(def_scope: List[str], name: str, custom_type: Struct) -> None:
-        custom_struct_types[".".join(def_scope + [name])] = custom_type
+    def add_custom_struct_type(name: str, custom_type: Struct) -> None:
+        custom_struct_types[name] = custom_type
 
+    def add_getter(name: str, impl: Any) -> None:
+        getters[name] = impl
 
     def parse_expression(calls: bool = True) -> Expression:
         curr = current()
@@ -161,12 +176,14 @@ def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct
             current_and_progress(RightParenthesis)
             return res
         if isinstance(curr, StringConstant):
-            return ConstantExpression(TypeSignaturePlain(PlainType.STRING), current_and_progress(StringConstant).value)
+            return ConstantPlainExpression(TypeSignaturePlain(PlainType.STRING),
+                                           current_and_progress(StringConstant).value)
         if isinstance(curr, BoolConstant):
-            return ConstantExpression(TypeSignaturePlain(PlainType.BOOLEAN), current_and_progress(BoolConstant).value)
+            return ConstantPlainExpression(TypeSignaturePlain(PlainType.BOOLEAN),
+                                           current_and_progress(BoolConstant).value)
         if isinstance(curr, IntegerConstant):
-            return ConstantExpression(TypeSignaturePlain(PlainType.INTEGER),
-                                      current_and_progress(IntegerConstant).value)
+            return ConstantPlainExpression(TypeSignaturePlain(PlainType.INTEGER),
+                                           current_and_progress(IntegerConstant).value)
         if isinstance(curr, Name):
             if calls:
                 func = current_and_progress(Name)
@@ -250,9 +267,9 @@ def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct
             while not isinstance(current(), Semicolon):
                 field_name, field_type = parse_typed_name()
                 fields.append(Variable(field_type, field_name))
-            add_custom_struct_type(scope, defined_name, Struct(fields))
-            print(fields)
+                add_getter(f"{defined_name}.{field_name}", itemgetter(field_name))
+            add_custom_struct_type(defined_name, Struct(fields))
         else:
             raise RuntimeError(f"Wat? {current()}")
 
-    return definitions, custom_struct_types
+    return definitions, custom_struct_types, getters

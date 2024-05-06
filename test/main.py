@@ -15,12 +15,13 @@ def main() -> None:
     tokens = lexer(augmented_source)
     print(f"{tokens=}")
 
-    ast, custom_struct_types = parser(tokens)
+    ast, custom_struct_types, getters = parser(tokens)
     print(f"{ast=}")
     print(f"{custom_struct_types=}")
+    print(f"{getters=}")
 
     print("Running:")
-    interpret(ast, custom_struct_types)
+    interpret(ast, custom_struct_types, getters)
 
 
 if __name__ == "__main__":
