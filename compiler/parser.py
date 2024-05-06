@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from enum import StrEnum
 from operator import itemgetter
-from typing import List, Optional, Type, Sequence, Dict, Tuple, Union
+from typing import List, Optional, Type, Sequence, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
 from .lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose, \
@@ -68,19 +68,17 @@ class Struct(TypeSignature):
 
 @dataclass
 class ConstantExpression(Expression):
-    pass
+    value: Any
 
 
 @dataclass
 class ConstantPlainExpression(ConstantExpression):
     type_sig: TypeSignaturePlain
-    value: Union[str, int, bool]
 
 
 @dataclass
 class ConstantStructExpression(ConstantExpression):
     type_sig: TypeSignature
-    value: Any
 
 
 def get_const_int(exp: ConstantPlainExpression) -> int:

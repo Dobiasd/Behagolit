@@ -76,7 +76,7 @@ def raise_type_error(expected: str, given: str) -> None:
     raise RuntimeError(f"Incorrect type. {given} given. {expected} wanted.")
 
 
-def assert_types_match(target_type: TypeSignature, expression: ConstantPlainExpression) -> None:
+def assert_types_match(target_type: TypeSignature, expression: ConstantExpression) -> None:
     assert isinstance(target_type, TypeSignaturePlain)
     assert isinstance(expression.type_sig, TypeSignaturePlain)
     if expression.type_sig != target_type:
@@ -123,7 +123,8 @@ def evaluate(ast: Dict[str, Definition],
         getter = getters.get(expression.function_name, None)
         if getter is not None:
             assert len(evaluated_args) == 1
-            return getter(evaluated_args[0].value)
+            result: ConstantExpression = getter(evaluated_args[0].value)
+            return result
         assert expression.function_name in builtin_functions, f"Wat? {expression.function_name}"
         return builtin_functions[expression.function_name](*evaluated_args)  # type: ignore
     if isinstance(expression, Variable):
