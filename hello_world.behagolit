@@ -1,12 +1,12 @@
 main:None = printLine message
 
-message:String = concat "Hello, world!" "\n" answerSentence
+message:String = concat "Hello, world!" (concat "\n" answerSentence)
 
 answerSentence:String = tellFact "answer" theAnswer
 
 theAnswer:String = ifElse True fourtyTwoRepr "No."
 
-tellFact:String name:String value:String = concat "The " name " is: " value
+tellFact:String name:String value:String = concat "The " (concat name (concat " is: " value))
 
 fourtyTwoRepr:String = intToStr fourtyTwo
 
@@ -15,26 +15,35 @@ fourtyTwo:Integer = + fourteen (+ 15 thirteen)
 
 fib:Integer n:Integer = ifElse (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))
 
-fourteen:Integer = + thirteen one
+fifteen:Integer = - (+ twentySeven two) fourTeen
 
-thirteen:Integer = + (* 10 (TwoDigitNumber.tens weirdThirteen)) (TwoDigitNumber.ones weirdThirteen)
+twentySeven:Integer = + (* 10 (TwoDigitNumber.tens weirdTwentySeven)) (TwoDigitNumber.ones weirdTwentySeven)
 
-one:Integer = 1
+two:Integer = 2
 
 TwoDigitNumber := struct tens:Integer ones:Integer
 
-weirdThirteen:TwoDigitNumber = TwoDigitNumber 1 3
+weirdTwentySeven:TwoDigitNumber = TwoDigitNumber 2 7
 
-# IntListElem := struct head:Integer tail:IntList
+#tempapply:Integer f:(Integer->Integer) x:Integer = f x
+#fourteen:Integer = tempapply square 3
 
-# union IntList = None | IntListElem
+#fourteen:Integer = + (square 3) 5
+#fourteen:Integer = 14
+fourteen:Integer = sum (map oneTwoThree square)
 
-# xs:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 None))
+oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 (EmptyList 0)))
 
-# fourteen:Integer = sum (xs map square)
+IntListElem := struct head:Integer tail:IntList
 
-# sum:Integer xs:IntList = fold
+EmptyList := struct nothing:Integer # todo: support none or empty structs
 
-# map:IntList xs:IntList f:(Integer->Integer) = ifElse (xs == None) None (IntListElem (f (head xs)) (map f (tail xs)))
+union IntList = EmptyList | IntListElem
 
-# foldr:Integer f:(Integer->Integer->Integer) acc:Integer xs:IntList = ifElse (xs == None) acc (f (head xs) (foldr f acc (tail xs)))
+sum:Integer xs:IntList = fold + 0 oneTwoThree
+
+map:IntList xs:IntList f:(Integer->Integer) = ifElse (== xs EmptyList) EmptyList (IntListElem (f (head xs)) (map f (tail xs)))
+
+foldr:Integer f:(Integer->Integer->Integer) acc:Integer xs:IntList = ifElse (== xs EmptyList) acc (f (head xs) (foldr f acc (tail xs)))
+
+square:Integer x:Integer = * x x

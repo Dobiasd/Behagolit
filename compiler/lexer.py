@@ -43,11 +43,6 @@ class Assignment(Token):
 
 
 @dataclass
-class EqualityCheck(Token):
-    pass
-
-
-@dataclass
 class ScopeOpen(Token):
     pass
 
@@ -64,6 +59,11 @@ class Semicolon(Token):
 
 @dataclass
 class Colon(Token):
+    pass
+
+
+@dataclass
+class Arrow(Token):
     pass
 
 
@@ -101,6 +101,14 @@ def lexer(augmented_source_orig: str) -> List[Token]:
                 continue
             tokens.append(Colon())
             continue
+        if current() == "-":
+            progress()
+            if current() == ">":
+                progress()
+                tokens.append(Arrow())
+                continue
+            tokens.append(Name("-"))
+            continue
         if current() == ")":
             tokens.append(RightParenthesis())
             progress()
@@ -117,7 +125,7 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             tokens.append(ScopeClose())
             progress()
             continue
-        if current() in ["+", "-", "*", "/", "%", "<", ">", ","]:
+        if current() in ["+", "*", "/", "%", "<", ">", ",", "|"]:  # todo split , and | into different token types
             tokens.append(Name(current()))
             progress()
             continue
@@ -157,7 +165,7 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             if acc == "=":
                 tokens.append(Assignment())
             elif acc == "==":
-                tokens.append(EqualityCheck())
+                tokens.append(Name(acc))
             else:
                 raise RuntimeError(f"Wat? {acc}")
             continue

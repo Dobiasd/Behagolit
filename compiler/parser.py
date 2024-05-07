@@ -51,9 +51,19 @@ class TypeSignatureFunction(TypeSignature):
 
 
 @dataclass
+class Parameter(Token):
+    type_sig: TypeSignature
+    name: str
+
+
+@dataclass
 class Expression(ABC):
     type_sig: TypeSignature
 
+
+@dataclass
+class BuiltInFunction(Expression):
+    impl: Any
 
 @dataclass
 class Variable(Expression):
@@ -64,6 +74,11 @@ class Variable(Expression):
 @dataclass
 class Struct(TypeSignature):
     fields: List[Variable]
+
+
+@dataclass
+class Union(TypeSignature):
+    options: List[TypeSignature]
 
 
 @dataclass
@@ -100,12 +115,6 @@ def get_const_bool(exp: ConstantPlainExpression) -> bool:
 
 
 @dataclass
-class Parameter(Token):
-    type_sig: TypeSignature
-    name: str
-
-
-@dataclass
 class Call(Expression):
     type_sig: TypeSignature
     function_name: str
@@ -120,19 +129,23 @@ class Definition:
 
 
 def parse_type_signature(type_sig_tokens: List[Token]) -> TypeSignature:
-    assert len(type_sig_tokens) == 1
-    first = type_sig_tokens[0]
-    assert isinstance(first, Name)
-    if first.value in PlainType._value2member_map_:
-        return TypeSignaturePlain(PlainType[first.value.upper()])
+    if len(type_sig_tokens) == 1:
+        first = type_sig_tokens[0]
+        assert isinstance(first, Name)
+        if first.value in PlainType._value2member_map_:
+            return TypeSignaturePlain(PlainType[first.value.upper()])
+        else:
+            return TypeSignatureCustom(first.value)
     else:
-        return TypeSignatureCustom(first.value)
+        return TypeSignatureCustom(str(type_sig_tokens))  # todo: build actual tyoe
 
 
-def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Any]]:
+def parser(tokens: List[Token]) \
+        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Any], Dict[str, List[TypeSignature]]]:
     definitions: Dict[str, Definition] = {}
     custom_struct_types: Dict[str, Struct] = {}
     getters: Dict[str, Any] = {}
+    unions: Dict[str, List[TypeSignature]] = {}
 
     def done() -> bool:
         return len(tokens) == 0
@@ -165,6 +178,9 @@ def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct
 
     def add_getter(name: str, impl: Any) -> None:
         getters[name] = impl
+
+    def add_union(name: str, union_options: List[TypeSignature]) -> None:
+        unions[name] = union_options
 
     def parse_expression(calls: bool = True) -> Expression:
         curr = current()
@@ -239,7 +255,17 @@ def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct
             continue
 
         defined_name = current_and_progress(Name).value
-        if current() == Colon():
+        if defined_name == "union":
+            defined_name = current_and_progress(Name).value
+            current_and_progress(Assignment)
+            options = []
+            while True:
+                options.append(parse_type())
+                if isinstance(current(), Semicolon):
+                    break
+                current_and_progress(Name)
+            add_union(defined_name, options)
+        elif current() == Colon():
             current_and_progress(Colon)
             defined_type = parse_type()
 
@@ -270,4 +296,4 @@ def parser(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Struct
         else:
             raise RuntimeError(f"Wat? {current()}")
 
-    return definitions, custom_struct_types, getters
+    return definitions, custom_struct_types, getters, unions
