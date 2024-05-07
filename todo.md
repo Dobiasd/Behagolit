@@ -2,6 +2,7 @@
 
 - type aliases
 - higher-order functions
+- automatic toString for every custom type?
 - show code example in readme
 - traits/interfaces
 - structs
