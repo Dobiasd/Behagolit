@@ -1,5 +1,110 @@
 # todo
 
+tests
+
+
+main:None = printLine message
+
+message:String = intToStr nine
+
+nine:Integer = apply square 3
+
+apply:Integer f:(Integer->Integer) x:Integer = f x
+
+square:Integer x:Integer = multiply x x
+
+
+
+
+
+
+
+
+main:None = printLine message
+
+message:String = intToStr fourteen
+
+fourteen:Integer = sum (map oneTwoThree square)
+
+oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 (EmptyList 0)))
+
+IntListElem := struct head:Integer tail:IntList
+
+EmptyList := struct nothing:Integer # todo: support none or empty structs
+
+union IntList = EmptyList | IntListElem
+
+sum:Integer xs:IntList = foldr plus 0 oneTwoThree
+
+map:IntList xs:IntList f:(Integer->Integer) = ifElse (equal xs (EmptyList 0)) (EmptyList 0) (IntListElem (f (IntListElem.head xs)) (map (IntListElem.tail xs) f))
+
+foldr:Integer f:(Integer->Integer->Integer) acc:Integer xs:IntList = ifElse (equal xs (EmptyList 0)) acc (f (IntListElem.head xs) (foldr f acc (IntListElem.tail xs)))
+
+square:Integer x:Integer = multiply x x
+
+
+
+
+
+
+
+
+
+
+main:None = printLine message
+
+message:String = concat "Hello, world!" (concat "\n" answerSentence)
+
+answerSentence:String = tellFact "answer" theAnswer
+
+theAnswer:String = ifElse True fourtyTwoRepr "No."
+
+tellFact:String name:String value:String = concat "The " (concat name (concat " is: " value))
+
+fourtyTwoRepr:String = intToStr fourtyTwo
+
+fourtyTwo:Integer = plus fourteen (plus 15 thirteen)
+    thirteen:Integer = fib 7
+
+fib:Integer n:Integer = ifElse (< n 2) n (plus (fib (- n 1)) (fib (- n 2)))
+
+fifteen:Integer = - (plus twentySeven two) fourTeen
+
+twentySeven:Integer = plus (multiply 10 (TwoDigitNumber.tens weirdTwentySeven)) (TwoDigitNumber.ones weirdTwentySeven)
+
+two:Integer = 2
+
+TwoDigitNumber := struct tens:Integer ones:Integer
+
+weirdTwentySeven:TwoDigitNumber = TwoDigitNumber 2 7
+
+#tempapply:Integer f:(Integer->Integer) x:Integer = f x
+#fourteen:Integer = tempapply square 3
+
+#fourteen:Integer = plus (square 3) 5
+#fourteen:Integer = 14
+fourteen:Integer = sum (map oneTwoThree square)
+
+oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 (EmptyList 0)))
+
+IntListElem := struct head:Integer tail:IntList
+
+EmptyList := struct nothing:Integer # todo: support none or empty structs
+
+union IntList = EmptyList | IntListElem
+
+sum:Integer xs:IntList = fold plus 0 oneTwoThree
+
+map:IntList xs:IntList f:(Integer->Integer) = ifElse (equal xs EmptyList) EmptyList (IntListElem (f (head xs)) (map f (tail xs)))
+
+foldr:Integer f:(Integer->Integer->Integer) acc:Integer xs:IntList = ifElse (equal xs EmptyList) acc (f (head xs) (foldr f acc (tail xs)))
+
+square:Integer x:Integer = multiply x x
+
+
+
+
+- run tests in CI
 - type aliases
 - higher-order functions
 - automatic toString for every custom type?

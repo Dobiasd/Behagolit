@@ -18,6 +18,11 @@ class LeftParenthesis(Token):
     pass
 
 
+@dataclass
+class Comma(Token):
+    pass
+
+
 class RightParenthesis(Token):
     pass
 
@@ -89,6 +94,10 @@ def lexer(augmented_source_orig: str) -> List[Token]:
         if current() == " ":
             progress()
             continue
+        if current() == ",":
+            tokens.append(Comma())
+            progress()
+            continue
         if current() == "(":
             tokens.append(LeftParenthesis())
             progress()
@@ -125,13 +134,13 @@ def lexer(augmented_source_orig: str) -> List[Token]:
             tokens.append(ScopeClose())
             progress()
             continue
-        if current() in ["+", "*", "/", "%", "<", ">", ",", "|"]:  # todo split , and | into different token types
+        if current() in ["+", "*", "/", "%", "<", ">", "|"]:  # todo split , and | into different token types
             tokens.append(Name(current()))
             progress()
             continue
-        if current().isalpha():
+        if current().isalpha() or current() == "_":
             acc = ""
-            while not done() and (current().isalnum() or current() == "."):
+            while not done() and (current().isalnum() or current() == "." or current() == "_"):
                 acc = acc + current()
                 progress()
             if acc in ["True", "False"]:

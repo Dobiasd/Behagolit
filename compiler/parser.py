@@ -1,12 +1,10 @@
 from abc import ABC
 from dataclasses import dataclass
-from enum import StrEnum
-from operator import itemgetter
-from typing import List, Optional, Type, Sequence, Dict, Tuple
+from typing import List, Sequence, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
-from .lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, ScopeOpen, ScopeClose, \
-    BoolConstant, LeftParenthesis, RightParenthesis, Colon, ColonEqual
+from .lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
+    RightParenthesis, Colon, Arrow, Comma
 
 T = TypeVar('T')
 
@@ -17,30 +15,13 @@ class MyTypeChecker(Generic[T]):
         return isinstance(x, self.__orig_class__.__args__[0])  # type: ignore
 
 
-class PlainType(StrEnum):
-    INTEGER = "Integer"
-    STRING = "String"
-    BOOLEAN = "Boolean"
-    NONE = "None"
-
-
 @dataclass
 class TypeSignature(ABC):
     pass
 
 
 @dataclass
-class TypeSignatureUnknown(TypeSignature):
-    pass
-
-
-@dataclass
 class TypeSignaturePlain(TypeSignature):
-    plain_type: PlainType
-
-
-@dataclass
-class TypeSignatureCustom(TypeSignature):
     name: str
 
 
@@ -51,29 +32,14 @@ class TypeSignatureFunction(TypeSignature):
 
 
 @dataclass
-class Parameter(Token):
-    type_sig: TypeSignature
-    name: str
-
-
-@dataclass
-class Expression(ABC):
-    type_sig: TypeSignature
-
-
-@dataclass
-class BuiltInFunction(Expression):
-    impl: Any
-
-@dataclass
-class Variable(Expression):
-    type_sig: TypeSignature
-    name: str
+class StructField:
+    field_name: str
+    field_type: TypeSignature
 
 
 @dataclass
 class Struct(TypeSignature):
-    fields: List[Variable]
+    fields: List[StructField]
 
 
 @dataclass
@@ -81,44 +47,71 @@ class Union(TypeSignature):
     options: List[TypeSignature]
 
 
+def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
+    idx = 0
+    curr = tokens[idx]
+    idx += 1
+    if isinstance(curr, Name):
+        return TypeSignaturePlain(curr.value), idx
+    if isinstance(curr, LeftParenthesis):
+        param_types = []
+        new_type, progress = parse_type(tokens[idx:])
+        param_types.append(new_type)
+        idx += progress
+        while isinstance(tokens[idx], Comma):
+            idx += 1
+            new_type, progress = parse_type(tokens[idx:])
+            param_types.append(new_type)
+            idx += progress
+        assert isinstance(tokens[idx], Arrow)
+        idx += 1
+        return_type, progress = parse_type(tokens[idx:])
+        idx += progress
+        assert isinstance(tokens[idx], RightParenthesis)
+        idx += 1
+        return TypeSignatureFunction(param_types, return_type), idx
+    assert False
+
+
 @dataclass
-class ConstantExpression(Expression):
+class Parameter(Token):
+    name: str
+    type_sig: TypeSignature
+
+
+@dataclass
+class Expression(ABC):
+    pass
+
+
+@dataclass
+class PlainExpression(Expression):
+    type_sig: TypeSignaturePlain
     value: Any
 
 
 @dataclass
-class ConstantPlainExpression(ConstantExpression):
-    type_sig: TypeSignaturePlain
+class Call(Expression):
+    function_name: str
+    args: Sequence[Expression]
 
 
-@dataclass
-class ConstantStructExpression(ConstantExpression):
-    type_sig: TypeSignature
-
-
-def get_const_int(exp: ConstantPlainExpression) -> int:
-    assert exp.type_sig == TypeSignaturePlain(PlainType.INTEGER)
+def get_const_int(exp: PlainExpression) -> int:
+    assert exp.type_sig == TypeSignaturePlain("Integer")
     assert isinstance(exp.value, int)
     return exp.value
 
 
-def get_const_str(exp: ConstantPlainExpression) -> str:
-    assert exp.type_sig == TypeSignaturePlain(PlainType.STRING)
+def get_const_str(exp: PlainExpression) -> str:
+    assert exp.type_sig == TypeSignaturePlain("String")
     assert isinstance(exp.value, str)
     return exp.value
 
 
-def get_const_bool(exp: ConstantPlainExpression) -> bool:
-    assert exp.type_sig == TypeSignaturePlain(PlainType.BOOLEAN)
+def get_const_bool(exp: PlainExpression) -> bool:
+    assert exp.type_sig == TypeSignaturePlain("Boolean")
     assert isinstance(exp.value, bool)
     return exp.value
-
-
-@dataclass
-class Call(Expression):
-    type_sig: TypeSignature
-    function_name: str
-    args: Sequence[Expression]
 
 
 @dataclass
@@ -128,16 +121,74 @@ class Definition:
     expression: Expression
 
 
-def parse_type_signature(type_sig_tokens: List[Token]) -> TypeSignature:
-    if len(type_sig_tokens) == 1:
-        first = type_sig_tokens[0]
-        assert isinstance(first, Name)
-        if first.value in PlainType._value2member_map_:
-            return TypeSignaturePlain(PlainType[first.value.upper()])
-        else:
-            return TypeSignatureCustom(first.value)
-    else:
-        return TypeSignatureCustom(str(type_sig_tokens))  # todo: build actual tyoe
+def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> Tuple[Expression, int]:
+    idx = 0
+    curr = tokens[idx]
+    if isinstance(curr, StringConstant):
+        idx += 1
+        return PlainExpression(TypeSignaturePlain("String"), curr.value), idx
+    if isinstance(curr, IntegerConstant):
+        idx += 1
+        return PlainExpression(TypeSignaturePlain("Integer"), int(curr.value)), idx
+    if isinstance(curr, BoolConstant):
+        idx += 1
+        assert curr.value in ["true", "false"]
+        return PlainExpression(TypeSignaturePlain("Integer"), curr.value == "true"), idx
+    if isinstance(curr, LeftParenthesis):
+        idx += 1
+        exp, progress = parse_expression(tokens[idx:])
+        idx += progress
+        assert isinstance(tokens[idx], RightParenthesis)
+        idx += 1
+        return exp, idx
+    if isinstance(curr, Name):
+        assert isinstance(curr, Name)
+        func_name = curr.value
+        idx += 1
+        args = []
+        if not allow_eat_args_right:
+            return Call(func_name, args), idx
+        while not isinstance(tokens[idx], Semicolon) and not isinstance(tokens[idx], RightParenthesis):
+            if isinstance(tokens[idx], LeftParenthesis):
+                arg, progress = parse_expression(tokens[idx:])
+            else:
+                arg, progress = parse_expression(tokens[idx:], allow_eat_args_right=False)
+            idx += progress
+            args.append(arg)
+        return Call(func_name, args), idx
+    assert False
+
+
+def parse_typed_name(tokens: List[Token]) -> Tuple[str, TypeSignature, int]:
+    idx = 0
+    curr = tokens[idx]
+    if not isinstance(curr, Name):
+        pass
+    assert isinstance(curr, Name)
+    def_name = curr.value
+    idx += 1
+    assert isinstance(tokens[idx], Colon)
+    idx += 1
+    def_type, progress = parse_type(tokens[idx:])
+    idx += progress
+    return def_name, def_type, idx
+
+
+def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
+    idx = 0
+    def_name, def_type, progress = parse_typed_name(tokens[idx:])
+    idx += progress
+    params = []
+    while not isinstance(tokens[idx], Assignment):
+        param_name, param_type, progress = parse_typed_name(tokens[idx:])
+        params.append(Parameter(param_name, param_type))
+        idx += progress
+
+    assert isinstance(tokens[idx], Assignment)
+    idx += 1
+    expression, progress = parse_expression(tokens[idx:])
+    idx += progress
+    return def_name, Definition(def_type, [], expression), idx
 
 
 def parser(tokens: List[Token]) \
@@ -147,153 +198,14 @@ def parser(tokens: List[Token]) \
     getters: Dict[str, Any] = {}
     unions: Dict[str, List[TypeSignature]] = {}
 
-    def done() -> bool:
-        return len(tokens) == 0
+    idx = 0
+    while isinstance(tokens[idx], Semicolon):
+        idx += 1
 
-    def current() -> Optional[Token]:
-        if len(tokens) == 0:
-            return None
-        return tokens[0]
-
-    def current_not_None() -> Token:
-        if len(tokens) == 0:
-            raise RuntimeError("No token left.")
-        return tokens[0]
-
-    def current_and_progress(cls: Type[T]) -> T:
-        current_token = current()
-        assert MyTypeChecker[cls]().is_right_type(  # type: ignore
-            current_token), f"Expecting {cls.__name__}, but got {type(current_token).__name__} instead."
-        progress()
-        return current_token  # type: ignore
-
-    def progress() -> Token:
-        return tokens.pop(0)
-
-    def add_definition(def_scope: List[str], name: str, definition: Definition) -> None:
-        definitions[".".join(def_scope + [name])] = definition
-
-    def add_custom_struct_type(name: str, custom_type: Struct) -> None:
-        custom_struct_types[name] = custom_type
-
-    def add_getter(name: str, impl: Any) -> None:
-        getters[name] = impl
-
-    def add_union(name: str, union_options: List[TypeSignature]) -> None:
-        unions[name] = union_options
-
-    def parse_expression(calls: bool = True) -> Expression:
-        curr = current()
-        if isinstance(curr, LeftParenthesis):
-            current_and_progress(LeftParenthesis)
-            res = parse_expression()
-            current_and_progress(RightParenthesis)
-            return res
-        if isinstance(curr, StringConstant):
-            return ConstantPlainExpression(TypeSignaturePlain(PlainType.STRING),
-                                           current_and_progress(StringConstant).value)
-        if isinstance(curr, BoolConstant):
-            return ConstantPlainExpression(TypeSignaturePlain(PlainType.BOOLEAN),
-                                           current_and_progress(BoolConstant).value)
-        if isinstance(curr, IntegerConstant):
-            return ConstantPlainExpression(TypeSignaturePlain(PlainType.INTEGER),
-                                           current_and_progress(IntegerConstant).value)
-        if isinstance(curr, Name):
-            if calls:
-                func = current_and_progress(Name)
-                args: List[Expression] = []
-                while not isinstance(current(), (Semicolon, RightParenthesis)):
-                    args.append(parse_expression(False))
-                return Call(TypeSignatureUnknown(), func.value, args)
-            else:
-                return Variable(TypeSignatureUnknown(), current_and_progress(Name).value)
-        raise RuntimeError(f"Wat: {curr}")
-
-    def parse_type() -> TypeSignature:
-        if isinstance(current(), LeftParenthesis):
-            type_sig_tokens = []
-            open_parenthesis = 1
-            while open_parenthesis > 0:
-                type_sig_tokens.append(current_not_None())
-                progress()
-                if isinstance(current(), LeftParenthesis):
-                    open_parenthesis += 1
-                if isinstance(current(), RightParenthesis):
-                    open_parenthesis -= 1
-            progress()
-        else:
-            type_sig_tokens = [current_and_progress(Name)]
-        def_type = parse_type_signature(type_sig_tokens)
-        return def_type
-
-    def parse_typed_name() -> Tuple[str, TypeSignature]:
-        def_name = current_and_progress(Name)
-        current_and_progress(Colon)
-        def_type = parse_type()
-        return def_name.value, def_type
-
-    last_defined_name: Optional[str] = None
-    scope: List[str] = []
-
-    while not done():
-        if isinstance(current(), ScopeOpen):
-            assert last_defined_name is not None
-            scope.append(last_defined_name)
-            progress()
-            continue
-
-        if isinstance(current(), ScopeClose):
-            assert last_defined_name is not None
-            scope.pop(-1)
-            if len(scope) == 0:
-                last_defined_name = None
-            progress()
-            continue
-
-        if isinstance(current(), Semicolon):
-            progress()
-            continue
-
-        defined_name = current_and_progress(Name).value
-        if defined_name == "union":
-            defined_name = current_and_progress(Name).value
-            current_and_progress(Assignment)
-            options = []
-            while True:
-                options.append(parse_type())
-                if isinstance(current(), Semicolon):
-                    break
-                current_and_progress(Name)
-            add_union(defined_name, options)
-        elif current() == Colon():
-            current_and_progress(Colon)
-            defined_type = parse_type()
-
-            assert defined_name not in definitions
-            last_defined_name = defined_name
-
-            params: List[Parameter] = []
-            while not isinstance(current(), Assignment):
-                param_name, param_type = parse_typed_name()
-                params.append(Parameter(param_type, param_name))
-
-            current_and_progress(Assignment)
-
-            expression = parse_expression()
-
-            add_definition(scope, defined_name, Definition(defined_type, params, expression))
-            progress()
-        elif current() == ColonEqual():
-            progress()
-            kind = current_and_progress(Name)
-            assert kind.value == "struct"
-            fields: List[Variable] = []
-            while not isinstance(current(), Semicolon):
-                field_name, field_type = parse_typed_name()
-                fields.append(Variable(field_type, field_name))
-                add_getter(f"{defined_name}.{field_name}", itemgetter(field_name))
-            add_custom_struct_type(defined_name, Struct(fields))
-        else:
-            raise RuntimeError(f"Wat? {current()}")
-
+    while idx < len(tokens):
+        def_name, definition, progress = parse_definition(tokens[idx:])
+        idx += progress
+        definitions[def_name] = definition
+        while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
+            idx += 1
     return definitions, custom_struct_types, getters, unions
