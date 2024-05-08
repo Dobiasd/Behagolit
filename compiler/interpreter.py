@@ -69,7 +69,8 @@ def raise_type_error(expected: str, given: str) -> None:
 
 
 def assert_types_match(target_type: TypeSignature, expression: Any) -> None:
-    if isinstance(target_type, TypeSignaturePlain) and isinstance(expression.type_sig, TypeSignaturePlain):
+    if isinstance(target_type, TypeSignaturePlain) and isinstance(expression, PlainExpression) and isinstance(
+            expression.type_sig, TypeSignaturePlain):
         assert isinstance(expression.type_sig, TypeSignaturePlain)
         if expression.type_sig != target_type:
             raise_type_error(target_type.plain_type, expression.type_sig.plain_type)
@@ -97,7 +98,7 @@ def evaluate(ast: Dict[str, Definition],
         evaluated_args = list(map(partial(evaluate, ast, custom_struct_types, getters, unions, scope), expression.args))
         definition = ast.get(expression.function_name, None)
         if definition is not None:
-            if len(expression.args) == 0:  # no partial application yet
+            if len(expression.args) == 0 and len(definition.params) != 0:  # no partial application yet
                 return definition.expression
             for param, arg in zip(definition.params, evaluated_args):
                 assert_types_match(param.type_sig, arg)
