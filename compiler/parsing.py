@@ -208,11 +208,30 @@ def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
     return struct_name, Struct(fields), idx
 
 
+def parse_union_definition(tokens: List[Token]) -> Tuple[str, Union, int]:
+    idx = 0
+    curr = tokens[idx]
+    assert isinstance(curr, Name)
+    union_namme = curr.value
+    idx += 1
+    assert tokens[idx] == ColonEqual()
+    idx += 1
+    assert tokens[idx] == Name("union")
+    idx += 1
+    options: List[TypeSignature] = []
+    while idx < len(tokens) and not isinstance(tokens[idx], Semicolon):
+        option = tokens[idx]
+        assert isinstance(option, Name)
+        idx += 1
+        options.append(TypeSignaturePlain(option.value))  # todo: support non-plain options
+    return union_namme, Union(options), idx
+
+
 def parse(tokens: List[Token]) \
-        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, List[TypeSignature]]]:
+        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Union]]:
     definitions: Dict[str, Definition] = {}
     structs: Dict[str, Struct] = {}
-    unions: Dict[str, List[TypeSignature]] = {}
+    unions: Dict[str, Union] = {}
 
     idx = 0
     while isinstance(tokens[idx], Semicolon):
@@ -221,14 +240,15 @@ def parse(tokens: List[Token]) \
     while idx < len(tokens):
         if tokens[idx + 1] == ColonEqual():
             if tokens[idx + 2] == Name("union"):
-                assert False
-                break
-            if tokens[idx + 2] == Name("struct"):
+                union_name, union, progress = parse_union_definition(tokens[idx:])
+                idx += progress
+                unions[union_name] = union
+            elif tokens[idx + 2] == Name("struct"):
                 struct_name, struct, progress = parse_struct_definition(tokens[idx:])
                 idx += progress
                 structs[struct_name] = struct
-                break
-            assert False
+            else:
+                assert False
         else:
             def_name, definition, progress = parse_definition(tokens[idx:])
             idx += progress
