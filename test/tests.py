@@ -111,3 +111,29 @@ square:Integer x:Integer = multiply x x
         ast = load_standard_library_ast() | code_ast
         self.assertEqual(evaluate(ast, structs, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("Boolean"), True))
+
+    def test_union(self) -> None:
+        source = "Foo := union Boolean Integer\nf:Foo = 42"
+        exp, _ = parse_expression(lex(augment("equal f 42")))
+        code_ast, structs, _ = parse(lex(augment(source)))
+        ast = load_standard_library_ast() | code_ast
+        self.assertEqual(evaluate(ast, structs, {}, [], exp),
+                         PlainExpression(TypeSignaturePlain("Boolean"), True))
+
+    def test_more_complex_higher_order_functions(self) -> None:
+        source = """
+fourteen:Integer = sum (map oneTwoThree square)
+oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 (EmptyList 0)))
+IntListElem := struct head:Integer tail:IntList
+EmptyList := struct nothing:Integer # todo: support none or empty structs
+IntList := union EmptyList | IntListElem
+sum:Integer xs:IntList = foldr plus 0 oneTwoThree
+map:IntList xs:IntList f:(Integer -> Integer) = ifElse (equal xs (EmptyList 0)) (EmptyList 0) (IntListElem (f (IntListElem.head xs)) (map (IntListElem.tail xs) f))
+foldr:Integer f:(Integer, Integer -> Integer) acc:Integer xs:IntList = ifElse (equal xs (EmptyList 0)) acc (f (IntListElem.head xs) (foldr f acc (IntListElem.tail xs)))
+square:Integer x:Integer = multiply x x
+"""
+        exp, _ = parse_expression(lex(augment("intToStr fourteen")))
+        code_ast, structs, _ = parse(lex(augment(source)))
+        ast = load_standard_library_ast() | code_ast
+        self.assertEqual(evaluate(ast, structs, {}, [], exp),
+                         PlainExpression(TypeSignaturePlain("String"), "14"))

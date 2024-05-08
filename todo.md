@@ -74,15 +74,15 @@ foldr:Integer f:(Integer->Integer->Integer) acc:Integer xs:IntList = ifElse (equ
 square:Integer x:Integer = multiply x x
 
 
-
-
-- run tests in CI
-- type aliases
+- structs
+- union type check
 - higher-order functions
+- scopes
+- switch assert sides
+- type aliases?
 - automatic toString for every custom type?
 - show code example in readme
 - traits/interfaces
-- structs
 - enforce elm architecture?
 - describe grammar is not context free https://en.wikipedia.org/wiki/Off-side_rule
 - stack based programming vergleichen (joy und cat)
