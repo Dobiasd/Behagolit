@@ -52,13 +52,6 @@ def equal(a: PlainExpression, b: PlainExpression) -> PlainExpression:
     return PlainExpression(TypeSignaturePlain("Boolean"), a.value == b.value)
 
 
-def replace_params(args: Dict[str, Expression], expression: Expression) -> Expression:
-    if isinstance(expression, Variable):
-        if expression.name in args:
-            return args[expression.name]
-    return expression
-
-
 def fqn(scope: List[str], name: str) -> str:
     scope_fqn = ".".join(scope)
     return (scope_fqn + "." if len(scope_fqn) != 0 else "") + name
