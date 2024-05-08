@@ -129,11 +129,10 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
         return PlainExpression(TypeSignaturePlain("String"), curr.value), idx
     if isinstance(curr, IntegerConstant):
         idx += 1
-        return PlainExpression(TypeSignaturePlain("Integer"), int(curr.value)), idx
+        return PlainExpression(TypeSignaturePlain("Integer"), curr.value), idx
     if isinstance(curr, BoolConstant):
         idx += 1
-        assert curr.value in ["true", "false"]
-        return PlainExpression(TypeSignaturePlain("Integer"), curr.value == "true"), idx
+        return PlainExpression(TypeSignaturePlain("Boolean"), curr.value), idx
     if isinstance(curr, LeftParenthesis):
         idx += 1
         exp, progress = parse_expression(tokens[idx:])
