@@ -131,9 +131,9 @@ plus:Integer a:Integer b:Integer = __builtin__plus
 minus:Integer a:Integer b:Integer = __builtin__minus
 multiply:Integer a:Integer b:Integer = __builtin__multiply
 modulo:Integer a:Integer b:Integer = __builtin__modulo
-less:Integer a:Integer b:Boolean = __builtin__less
-greater:Integer a:Integer b:Boolean = __builtin__greater
-equal:Integer a:Integer b:Boolean = __builtin__equal"""
+less:Boolean a:Integer b:Integer = __builtin__less
+greater:Boolean a:Integer b:Integer = __builtin__greater
+equal:Boolean a:Integer b:Integer = __builtin__equal"""
     standard_library_ast, _, _ = parse(lex(augment(standard_library_source)))
     return standard_library_ast
 
