@@ -66,7 +66,7 @@ def assert_types_match(target_type: TypeSignature, expression: Any) -> None:
             expression.type_sig, TypeSignaturePlain):
         assert isinstance(expression.type_sig, TypeSignaturePlain)
         if expression.type_sig != target_type:
-            raise_type_error(target_type.plain_type, expression.type_sig.plain_type)
+            raise_type_error(target_type.name, expression.type_sig.name)
     # todo: check non-plain types too
 
 
