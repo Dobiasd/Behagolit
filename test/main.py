@@ -1,7 +1,7 @@
-from compiler.augmenter import augmenter
-from compiler.interpreter import interpret
-from compiler.lexer import lexer
-from compiler.parser import parser
+from compiler.augmenting import augment
+from compiler.interpreting import interpret
+from compiler.lexing import lex
+from compiler.parsing import parse
 
 
 def main() -> None:
@@ -9,13 +9,13 @@ def main() -> None:
         source = file.read()
     print(source)
 
-    augmented_source = augmenter(source)
+    augmented_source = augment(source)
     print(f"{augmented_source=}")
 
-    tokens = lexer(augmented_source)
+    tokens = lex(augmented_source)
     print(f"{tokens=}")
 
-    ast, custom_struct_types, getters, unions = parser(tokens)
+    ast, custom_struct_types, getters, unions = parse(tokens)
     print(f"{ast=}")
     print(f"{custom_struct_types=}")
     print(f"{getters=}")

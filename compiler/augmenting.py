@@ -1,4 +1,4 @@
-def augmenter(source: str) -> str:
+def augment(source: str) -> str:
     lines = source.split("\n")
     augmented_source = ""
     current_indentation_level = 0

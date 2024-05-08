@@ -1,7 +1,7 @@
-from .augmenter import augmenter as augmenter
-from .lexer import lexer as lexer
-from .parser import parser as parser
-from .interpreter import interpret as interpreter
+from .augmenting import augment as augment
+from .interpreting import interpret as interpret
+from .lexing import lex as lex
+from .parsing import parse as parse
 
 name = "Behagolit"
 

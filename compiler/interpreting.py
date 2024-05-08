@@ -1,10 +1,11 @@
 from functools import partial
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Callable
 
-from . import lexer, augmenter
-from .parser import Definition, Expression, \
+from .augmenting import augment
+from .lexing import lex
+from .parsing import Definition, Expression, \
     Call, TypeSignaturePlain, TypeSignature, get_const_str, get_const_int, Struct, \
-    parser, PlainExpression
+    parse, PlainExpression
 
 
 def printline(text: PlainExpression) -> None:
@@ -98,7 +99,7 @@ def evaluate(ast: Dict[str, Definition],
             if isinstance(definition.expression, Call) and definition.expression.function_name.startswith(
                     "__builtin__") and len(definition.expression.args) == 0:
                 global_name = definition.expression.function_name.split("__")[-1]
-                f = globals()[global_name]
+                f: Callable[[Any], Expression] = globals()[global_name]
                 return f(*evaluated_args)
             extension = dict(  # todo params
                 map(lambda p, a: (p.name, Definition(p.type_sig, [], a)), definition.params, evaluated_args))
@@ -120,7 +121,7 @@ modulo:Integer a:Integer b:Integer = __builtin__modulo
 less:Integer a:Integer b:Boolean = __builtin__less
 greater:Integer a:Integer b:Boolean = __builtin__greater
 equal:Integer a:Integer b:Boolean = __builtin__equal"""
-    standard_library_ast, _, _, _ = parser(lexer(augmenter(standard_library_source)))
+    standard_library_ast, _, _, _ = parse(lex(augment(standard_library_source)))
     return standard_library_ast
 
 

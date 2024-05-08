@@ -77,7 +77,7 @@ class ColonEqual(Token):
     pass
 
 
-def lexer(augmented_source_orig: str) -> List[Token]:
+def lex(augmented_source_orig: str) -> List[Token]:
     augmented_source: List[str] = [*augmented_source_orig]
     tokens: List[Token] = []
 

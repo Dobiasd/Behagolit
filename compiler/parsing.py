@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Sequence, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
-from .lexer import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
+from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma
 
 T = TypeVar('T')
@@ -144,7 +144,7 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
         assert isinstance(curr, Name)
         func_name = curr.value
         idx += 1
-        args = []
+        args: List[Expression] = []
         if not allow_eat_args_right:
             return Call(func_name, args), idx
         while not isinstance(tokens[idx], Semicolon) and not isinstance(tokens[idx], RightParenthesis):
@@ -190,7 +190,7 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
     return def_name, Definition(def_type, params, expression), idx
 
 
-def parser(tokens: List[Token]) \
+def parse(tokens: List[Token]) \
         -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Any], Dict[str, List[TypeSignature]]]:
     definitions: Dict[str, Definition] = {}
     custom_struct_types: Dict[str, Struct] = {}

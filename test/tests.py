@@ -1,20 +1,20 @@
 import unittest
 
-from compiler import lexer, augmenter
-from compiler.interpreter import evaluate, load_standard_library_ast
-from compiler.lexer import Name, Colon, Assignment, Semicolon
-from compiler.parser import parse_type, TypeSignaturePlain, TypeSignatureFunction, parse_expression, Call, \
-    PlainExpression, Definition, parser
+from compiler import augment
+from compiler.interpreting import evaluate, load_standard_library_ast
+from compiler.lexing import Name, Colon, Assignment, Semicolon, lex
+from compiler.parsing import parse_type, TypeSignaturePlain, TypeSignatureFunction, parse_expression, Call, \
+    PlainExpression, Definition, parse
 
 
 class TestFoo(unittest.TestCase):
 
-    def test_augmenter(self) -> None:
-        augmented = augmenter("foo\nbar")
+    def test_augment(self) -> None:
+        augmented = augment("foo\nbar")
         self.assertEqual(augmented, "foo;bar;")
 
-    def test_lexer(self) -> None:
-        tokens = lexer(augmenter("main:None = printLine message"))
+    def test_lex(self) -> None:
+        tokens = lex(augment("main:None = printLine message"))
         self.assertEqual(tokens, [
             Name(value='main'),
             Colon(),
@@ -26,16 +26,16 @@ class TestFoo(unittest.TestCase):
         ])
 
     def test_parse_plain_type(self) -> None:
-        self.assertEqual(parse_type(lexer(augmenter("None"))), (TypeSignaturePlain(name='None'), 1))
+        self.assertEqual(parse_type(lex(augment("None"))), (TypeSignaturePlain(name='None'), 1))
 
     def test_parse_function_type(self) -> None:
-        self.assertEqual(parse_type(lexer(augmenter("(Integer, Boolean -> String)"))), (
+        self.assertEqual(parse_type(lex(augment("(Integer, Boolean -> String)"))), (
             TypeSignatureFunction(params=[TypeSignaturePlain(name='Integer'),
                                           TypeSignaturePlain(name='Boolean')],
                                   return_type=TypeSignaturePlain(name='String')), 7))
 
     def test_parse_higher_order_function_type(self) -> None:
-        self.assertEqual(parse_type(lexer(augmenter("(String, (String -> Boolean) -> Integer))"))),
+        self.assertEqual(parse_type(lex(augment("(String, (String -> Boolean) -> Integer))"))),
                          (TypeSignatureFunction(params=[TypeSignaturePlain(name='String'),
                                                         TypeSignatureFunction(
                                                             params=[TypeSignaturePlain(name='String')],
@@ -43,14 +43,14 @@ class TestFoo(unittest.TestCase):
                                                 return_type=TypeSignaturePlain(name='Integer')), 11))
 
     def test_parse_plain_expression(self) -> None:
-        self.assertEqual(parse_expression(lexer(augmenter("plus 1 2"))),
+        self.assertEqual(parse_expression(lex(augment("plus 1 2"))),
                          (Call(function_name='plus',
                                args=[PlainExpression(type_sig=TypeSignaturePlain(name='Integer'), value=1),
                                      PlainExpression(type_sig=TypeSignaturePlain(name='Integer'), value=2)]),
                           3))
 
     def test_parse_parenthesised_expression(self) -> None:
-        self.assertEqual(parse_expression(lexer(augmenter("plus (minus 3 2) (multiply 4 5)"))),
+        self.assertEqual(parse_expression(lex(augment("plus (minus 3 2) (multiply 4 5)"))),
                          (Call(function_name='plus',
                                args=[Call(function_name='minus',
                                           args=[PlainExpression(type_sig=TypeSignaturePlain(name='Integer'),
@@ -65,7 +65,7 @@ class TestFoo(unittest.TestCase):
                           11))
 
     def test_evaluate_simple_expression(self) -> None:
-        exp, _ = parse_expression(lexer(augmenter("plus 1 2")))
+        exp, _ = parse_expression(lex(augment("plus 1 2")))
         self.assertEqual(evaluate(load_standard_library_ast(), {}, {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("Integer"), 3))
 
@@ -73,12 +73,12 @@ class TestFoo(unittest.TestCase):
         load_standard_library_ast()
 
     def test_evaluate_nested_expression(self) -> None:
-        exp, _ = parse_expression(lexer(augmenter("intToStr (plus (plus 1 1) (plus 1 (plus 1 1)))")))
+        exp, _ = parse_expression(lex(augment("intToStr (plus (plus 1 1) (plus 1 (plus 1 1)))")))
         self.assertEqual(evaluate(load_standard_library_ast(), {}, {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("String"), "5"))
 
     def test_parse_definition(self) -> None:
-        ast, _, _, _ = parser(lexer(augmenter("a:Integer = 1")))
+        ast, _, _, _ = parse(lex(augment("a:Integer = 1")))
         self.assertEqual(
             ast,
             {'a':
@@ -87,8 +87,8 @@ class TestFoo(unittest.TestCase):
                                                        value=1))})
 
     def test_with_definitions(self) -> None:
-        exp, _ = parse_expression(lexer(augmenter("plus a b")))
-        code_ast, _, _, _ = parser(lexer(augmenter("a:Integer = 1\nb:Integer=c\nc:Integer=2")))
+        exp, _ = parse_expression(lex(augment("plus a b")))
+        code_ast, _, _, _ = parse(lex(augment("a:Integer = 1\nb:Integer=c\nc:Integer=2")))
         ast = load_standard_library_ast() | code_ast
         self.assertEqual(evaluate(ast, {}, {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("Integer"), 3))
@@ -98,8 +98,8 @@ class TestFoo(unittest.TestCase):
 apply:Integer f:(Integer->Integer) x:Integer = f x
 square:Integer x:Integer = multiply x x
 """
-        exp, _ = parse_expression(lexer(augmenter("apply square 3")))
-        code_ast, _, _, _ = parser(lexer(augmenter(source)))
+        exp, _ = parse_expression(lex(augment("apply square 3")))
+        code_ast, _, _, _ = parse(lex(augment(source)))
         ast = load_standard_library_ast() | code_ast
         self.assertEqual(evaluate(ast, {}, {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("Integer"), 9))
