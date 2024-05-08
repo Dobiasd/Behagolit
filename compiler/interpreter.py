@@ -111,34 +111,7 @@ def evaluate(ast: Dict[str, Definition],
             extended_ast = ast | extension
             return evaluate(extended_ast, custom_struct_types, getters, unions, [expression.function_name],
                             definition.expression)
-        custom_struct = custom_struct_types.get(expression.function_name, None)
-        if custom_struct is not None:
-            field_names = [f.name for f in custom_struct.fields]
-            return ConstantStructExpression(TypeSignatureCustom(expression.function_name),
-                                            dict(zip(field_names, evaluated_args)))
-        getter = getters.get(expression.function_name, None)
-        if getter is not None:
-            assert len(evaluated_args) == 1
-            result: ConstantExpression = getter(evaluated_args[0].value)
-            return result
         assert False
-    if isinstance(expression, Variable):
-        var_definition: Optional[Definition] = None
-        containing_scope: List[str] = []
-        for idx in range(len(scope), -1, -1):
-            scope_fqn = fqn(scope[:idx], expression.name)
-            var_definition = ast.get(scope_fqn, None)
-            if var_definition is not None:
-                containing_scope = scope[:idx]
-                break
-        if not var_definition:
-            raise RuntimeError(f"No definition found for: {expression.name}")
-        if isinstance(var_definition.expression, Call):
-            if len(var_definition.params) > 0:
-                return var_definition.expression
-        return evaluate(ast, custom_struct_types, getters, unions, containing_scope + [expression.name],
-                        var_definition.def_type,
-                        var_definition.expression)
     raise RuntimeError("Wat")
 
 
