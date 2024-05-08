@@ -92,3 +92,14 @@ class TestFoo(unittest.TestCase):
         ast = load_standard_library_ast() | code_ast
         self.assertEqual(evaluate(ast, {}, {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("Integer"), 3))
+
+    def test_higher_order_functions(self) -> None:
+        source = """
+apply:Integer f:(Integer->Integer) x:Integer = f x
+square:Integer x:Integer = multiply x x
+"""
+        exp, _ = parse_expression(lexer(augmenter("apply square 3")))
+        code_ast, _, _, _ = parser(lexer(augmenter(source)))
+        ast = load_standard_library_ast() | code_ast
+        self.assertEqual(evaluate(ast, {}, {}, {}, [], exp),
+                         PlainExpression(TypeSignaturePlain("Integer"), 9))

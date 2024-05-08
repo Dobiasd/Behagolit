@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 from . import lexer, augmenter
 from .parser import Definition, Expression, \
@@ -97,6 +97,8 @@ def evaluate(ast: Dict[str, Definition],
         evaluated_args = list(map(partial(evaluate, ast, custom_struct_types, getters, unions, scope), expression.args))
         definition = ast.get(expression.function_name, None)
         if definition is not None:
+            if len(expression.args) == 0:  # no partial application yet
+                return definition.expression
             for param, arg in zip(definition.params, evaluated_args):
                 assert_types_match(param.type_sig, arg)
             if isinstance(definition.expression, Call) and definition.expression.function_name.startswith(

@@ -188,7 +188,7 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
     idx += 1
     expression, progress = parse_expression(tokens[idx:])
     idx += progress
-    return def_name, Definition(def_type, [], expression), idx
+    return def_name, Definition(def_type, params, expression), idx
 
 
 def parser(tokens: List[Token]) \
