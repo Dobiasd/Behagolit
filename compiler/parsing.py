@@ -4,7 +4,7 @@ from typing import List, Sequence, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
-    RightParenthesis, Colon, Arrow, Comma
+    RightParenthesis, Colon, Arrow, Comma, ColonEqual
 
 T = TypeVar('T')
 
@@ -33,8 +33,8 @@ class TypeSignatureFunction(TypeSignature):
 
 @dataclass
 class StructField:
-    field_name: str
-    field_type: TypeSignature
+    name: str
+    type_sig: TypeSignature
 
 
 @dataclass
@@ -190,11 +190,28 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
     return def_name, Definition(def_type, params, expression), idx
 
 
+def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
+    idx = 0
+    curr = tokens[idx]
+    assert isinstance(curr, Name)
+    struct_name = curr.value
+    idx += 1
+    assert tokens[idx] == ColonEqual()
+    idx += 1
+    assert tokens[idx] == Name("struct")
+    idx += 1
+    fields: List[StructField] = []
+    while idx < len(tokens) and not isinstance(tokens[idx], Semicolon):
+        field_name, field_type, progress = parse_typed_name(tokens[idx:])
+        idx += progress
+        fields.append(StructField(field_name, field_type))
+    return struct_name, Struct(fields), idx
+
+
 def parse(tokens: List[Token]) \
-        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Any], Dict[str, List[TypeSignature]]]:
+        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, List[TypeSignature]]]:
     definitions: Dict[str, Definition] = {}
-    custom_struct_types: Dict[str, Struct] = {}
-    getters: Dict[str, Any] = {}
+    structs: Dict[str, Struct] = {}
     unions: Dict[str, List[TypeSignature]] = {}
 
     idx = 0
@@ -202,9 +219,20 @@ def parse(tokens: List[Token]) \
         idx += 1
 
     while idx < len(tokens):
-        def_name, definition, progress = parse_definition(tokens[idx:])
-        idx += progress
-        definitions[def_name] = definition
+        if tokens[idx + 1] == ColonEqual():
+            if tokens[idx + 2] == Name("union"):
+                assert False
+                break
+            if tokens[idx + 2] == Name("struct"):
+                struct_name, struct, progress = parse_struct_definition(tokens[idx:])
+                idx += progress
+                structs[struct_name] = struct
+                break
+            assert False
+        else:
+            def_name, definition, progress = parse_definition(tokens[idx:])
+            idx += progress
+            definitions[def_name] = definition
         while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
             idx += 1
-    return definitions, custom_struct_types, getters, unions
+    return definitions, structs, unions

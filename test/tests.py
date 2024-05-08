@@ -66,7 +66,7 @@ class TestFoo(unittest.TestCase):
 
     def test_evaluate_simple_expression(self) -> None:
         exp, _ = parse_expression(lex(augment("plus 1 2")))
-        self.assertEqual(evaluate(load_standard_library_ast(), {}, {}, {}, [], exp),
+        self.assertEqual(evaluate(load_standard_library_ast(), {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("Integer"), 3))
 
     def test_load_standard_library(self) -> None:
@@ -74,11 +74,11 @@ class TestFoo(unittest.TestCase):
 
     def test_evaluate_nested_expression(self) -> None:
         exp, _ = parse_expression(lex(augment("intToStr (plus (plus 1 1) (plus 1 (plus 1 1)))")))
-        self.assertEqual(evaluate(load_standard_library_ast(), {}, {}, {}, [], exp),
+        self.assertEqual(evaluate(load_standard_library_ast(), {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("String"), "5"))
 
     def test_parse_definition(self) -> None:
-        ast, _, _, _ = parse(lex(augment("a:Integer = 1")))
+        ast, _, _ = parse(lex(augment("a:Integer = 1")))
         self.assertEqual(
             ast,
             {'a':
@@ -88,9 +88,9 @@ class TestFoo(unittest.TestCase):
 
     def test_with_definitions(self) -> None:
         exp, _ = parse_expression(lex(augment("plus a b")))
-        code_ast, _, _, _ = parse(lex(augment("a:Integer = 1\nb:Integer=c\nc:Integer=2")))
+        code_ast, _, _ = parse(lex(augment("a:Integer = 1\nb:Integer=c\nc:Integer=2")))
         ast = load_standard_library_ast() | code_ast
-        self.assertEqual(evaluate(ast, {}, {}, {}, [], exp),
+        self.assertEqual(evaluate(ast, {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("Integer"), 3))
 
     def test_higher_order_functions(self) -> None:
@@ -99,7 +99,15 @@ apply:Integer f:(Integer->Integer) x:Integer = f x
 square:Integer x:Integer = multiply x x
 """
         exp, _ = parse_expression(lex(augment("apply square 3")))
-        code_ast, _, _, _ = parse(lex(augment(source)))
+        code_ast, _, _ = parse(lex(augment(source)))
         ast = load_standard_library_ast() | code_ast
-        self.assertEqual(evaluate(ast, {}, {}, {}, [], exp),
+        self.assertEqual(evaluate(ast, {}, {}, [], exp),
                          PlainExpression(TypeSignaturePlain("Integer"), 9))
+
+    def test_struct(self) -> None:
+        source = "Foo := struct x:Integer y:Boolean"
+        exp, _ = parse_expression(lex(augment("Foo.y (Foo 42 true)")))
+        code_ast, structs, _ = parse(lex(augment(source)))
+        ast = load_standard_library_ast() | code_ast
+        self.assertEqual(evaluate(ast, structs, {}, [], exp),
+                         PlainExpression(TypeSignaturePlain("Boolean"), True))

@@ -143,8 +143,8 @@ def lex(augmented_source_orig: str) -> List[Token]:
             while not done() and (current().isalnum() or current() == "." or current() == "_"):
                 acc = acc + current()
                 progress()
-            if acc in ["True", "False"]:
-                tokens.append(BoolConstant(True if acc == "True" else False))
+            if acc in ["true", "false"]:
+                tokens.append(BoolConstant(True if acc == "true" else False))
             else:
                 tokens.append(Name(acc))
             continue

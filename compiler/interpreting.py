@@ -72,8 +72,7 @@ def assert_types_match(target_type: TypeSignature, expression: Any) -> None:
 
 
 def evaluate(ast: Dict[str, Definition],
-             custom_struct_types: Dict[str, Struct],
-             getters: Dict[str, Any],
+             structs: Dict[str, Struct],
              unions: Dict[str, List[TypeSignature]],
              scope: List[str],
              expression: Expression) -> Expression:
@@ -82,14 +81,14 @@ def evaluate(ast: Dict[str, Definition],
     if isinstance(expression, Call):
         if expression.function_name == "ifElse":
             assert len(expression.args) == 3
-            cond = evaluate(ast, custom_struct_types, getters, unions, scope, expression.args[0])
+            cond = evaluate(ast, structs, unions, scope, expression.args[0])
             assert isinstance(cond, PlainExpression)
             assert cond.type_sig == TypeSignaturePlain("Boolean")
             if cond.value:
-                return evaluate(ast, custom_struct_types, getters, unions, scope, expression.args[1])
+                return evaluate(ast, structs, unions, scope, expression.args[1])
             else:
-                return evaluate(ast, custom_struct_types, getters, unions, scope, expression.args[2])
-        evaluated_args = list(map(partial(evaluate, ast, custom_struct_types, getters, unions, scope), expression.args))
+                return evaluate(ast, structs, unions, scope, expression.args[2])
+        evaluated_args = list(map(partial(evaluate, ast, structs, unions, scope), expression.args))
         definition = ast.get(expression.function_name, None)
         if definition is not None:
             if len(expression.args) == 0 and len(definition.params) != 0:  # no partial application yet
@@ -104,8 +103,22 @@ def evaluate(ast: Dict[str, Definition],
             extension = dict(  # todo params
                 map(lambda p, a: (p.name, Definition(p.type_sig, [], a)), definition.params, evaluated_args))
             extended_ast = ast | extension
-            return evaluate(extended_ast, custom_struct_types, getters, unions, [expression.function_name],
+            return evaluate(extended_ast, structs, unions, [expression.function_name],
                             definition.expression)
+        struct = structs.get(expression.function_name, None)
+        if struct is not None:
+            field_names = list(map(lambda field: field.name, struct.fields))
+            return PlainExpression(TypeSignaturePlain(expression.function_name), dict(zip(field_names, evaluated_args)))
+        if "." in expression.function_name:
+            splitted = expression.function_name.split(".")
+            struct_name = splitted[0]
+            field_name = splitted[1]
+            assert len(evaluated_args) == 1
+            getter_arg = evaluated_args[0]
+            assert isinstance(getter_arg, PlainExpression)
+            assert struct_name == getter_arg.type_sig.name
+            result: Expression = getter_arg.value[field_name]
+            return result
         assert False
     raise RuntimeError("Wat")
 
@@ -121,7 +134,7 @@ modulo:Integer a:Integer b:Integer = __builtin__modulo
 less:Integer a:Integer b:Boolean = __builtin__less
 greater:Integer a:Integer b:Boolean = __builtin__greater
 equal:Integer a:Integer b:Boolean = __builtin__equal"""
-    standard_library_ast, _, _, _ = parse(lex(augment(standard_library_source)))
+    standard_library_ast, _, _ = parse(lex(augment(standard_library_source)))
     return standard_library_ast
 
 
@@ -132,4 +145,4 @@ def interpret(ast: Dict[str, Definition], custom_struct_types: Dict[str, Struct]
     assert isinstance(main.expression, Call)
 
     extended_ast = ast | load_standard_library_ast()
-    evaluate(extended_ast, custom_struct_types, getters, unions, ["main"], main.expression)
+    evaluate(extended_ast, custom_struct_types, unions, ["main"], main.expression)

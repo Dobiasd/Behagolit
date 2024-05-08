@@ -3,16 +3,6 @@
 tests
 
 
-main:None = printLine message
-
-message:String = intToStr nine
-
-nine:Integer = apply square 3
-
-apply:Integer f:(Integer->Integer) x:Integer = f x
-
-square:Integer x:Integer = multiply x x
-
 
 
 
@@ -22,25 +12,7 @@ square:Integer x:Integer = multiply x x
 
 main:None = printLine message
 
-message:String = intToStr fourteen
 
-fourteen:Integer = sum (map oneTwoThree square)
-
-oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 (EmptyList 0)))
-
-IntListElem := struct head:Integer tail:IntList
-
-EmptyList := struct nothing:Integer # todo: support none or empty structs
-
-union IntList = EmptyList | IntListElem
-
-sum:Integer xs:IntList = foldr plus 0 oneTwoThree
-
-map:IntList xs:IntList f:(Integer->Integer) = ifElse (equal xs (EmptyList 0)) (EmptyList 0) (IntListElem (f (IntListElem.head xs)) (map (IntListElem.tail xs) f))
-
-foldr:Integer f:(Integer->Integer->Integer) acc:Integer xs:IntList = ifElse (equal xs (EmptyList 0)) acc (f (IntListElem.head xs) (foldr f acc (IntListElem.tail xs)))
-
-square:Integer x:Integer = multiply x x
 
 
 
