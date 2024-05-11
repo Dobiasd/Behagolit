@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from abc import ABC
 from dataclasses import dataclass
+from functools import partial
 from typing import List, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
-from .expressions import Expression, PlainExpression, Variable, Parameter, Application, Function
+from .expressions import Expression, PlainExpression, Variable, Parameter, Application, Function, PrimitiveProcedure
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma, ColonEqual
 
@@ -40,14 +41,8 @@ class TypeSignatureFunction(TypeSignature):
 
 
 @dataclass
-class StructField:
-    name: str
-    type_sig: TypeSignature
-
-
-@dataclass
 class Struct(TypeSignature):
-    fields: List[StructField]
+    fields: List[str]  # no type attached yet
 
 
 @dataclass
@@ -166,11 +161,11 @@ def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
     idx += 1
     assert tokens[idx] == Name("struct")
     idx += 1
-    fields: List[StructField] = []
+    fields: List[str] = []
     while idx < len(tokens) and not isinstance(tokens[idx], Semicolon):
         field_name, field_type, progress = parse_typed_name(tokens[idx:])
         idx += progress
-        fields.append(StructField(field_name, field_type))
+        fields.append(field_name)  # todo: use field_type
     return struct_name, Struct(fields), idx
 
 
@@ -225,4 +220,13 @@ def parse(tokens: List[Token]) \
     print(f"{definitions=}")
     print(f"{structs=}")
     print(f"{unions=}")
+    for name, struct in structs.items():
+        definitions[name] = PrimitiveProcedure(list(map(lambda f: Parameter(f), struct.fields)), {},
+                                               partial(create_struct, struct.fields))
+        for field in struct.fields:
+            definitions[name + "." + field] = PrimitiveProcedure([Parameter("s")], {}, lambda s: s[field])
     return definitions, structs, unions
+
+
+def create_struct(field_names: List[str], *args: List[Expression]) -> PlainExpression:
+    return PlainExpression(dict(zip(field_names, args)))
