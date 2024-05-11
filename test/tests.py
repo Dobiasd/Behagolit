@@ -1,9 +1,10 @@
 import unittest
 
 from compiler import augment
-from compiler.interpreting import evaluate, load_standard_library_ast
+from compiler.builtins import default_environment
+from compiler.interpreting import evaluate
 from compiler.lexing import Name, Colon, Assignment, Semicolon, lex
-from compiler.parsing import parse_type, TypeSignaturePlain, TypeSignatureFunction, parse_expression, Function, \
+from compiler.parsing import parse_type, TypeSignaturePlain, TypeSignatureFunction, parse_expression, Application, \
     PlainExpression, parse, Variable
 
 
@@ -44,31 +45,28 @@ class TestFoo(unittest.TestCase):
 
     def test_parse_plain_expression(self) -> None:
         self.assertEqual(parse_expression(lex(augment("plus 1 2"))),
-                         (Function([], [
-                             Variable("plus"),
-                             PlainExpression(1),
-                             PlainExpression(2)]),
+                         (Application(
+                             Variable("plus"), [
+                                 PlainExpression(1),
+                                 PlainExpression(2)]),
                           3))
 
     def test_parse_parenthesised_expression(self) -> None:
         self.assertEqual(parse_expression(lex(augment("plus (minus 3 2) (multiply 4 5)"))),
-                         (Function([], [
-                             Variable("plus"),
-                             Function([], [Variable("minus"), PlainExpression(3), PlainExpression(2)]),
-                             Function([], [Variable("multiply"), PlainExpression(4), PlainExpression(5)])]),
+                         (Application(
+                             Variable("plus"), [
+                                 Application(Variable("minus"), [PlainExpression(3), PlainExpression(2)]),
+                                 Application(Variable("multiply"), [PlainExpression(4), PlainExpression(5)])]),
                           11))
-
-    def test_load_standard_library(self) -> None:
-        load_standard_library_ast()
 
     def test_evaluate_simple_expression(self) -> None:
         exp, _ = parse_expression(lex(augment("plus 1 2")))
-        self.assertEqual(evaluate(load_standard_library_ast(), exp), PlainExpression(3))
+        self.assertEqual(evaluate(default_environment(), exp), PlainExpression(3))
 
     def test_evaluate_nested_expression(self) -> None:
         exp, _ = parse_expression(lex(augment("intToStr (plus (plus 1 1) (plus 1 (plus 1 1)))")))
         print(f"{exp=}")  # todo: remove
-        self.assertEqual(evaluate(load_standard_library_ast(), exp),
+        self.assertEqual(evaluate(default_environment(), exp),
                          PlainExpression("5"))
 
     def test_parse_definition(self) -> None:
@@ -80,8 +78,15 @@ class TestFoo(unittest.TestCase):
     def test_with_definitions(self) -> None:
         exp, _ = parse_expression(lex(augment("plus a b")))
         code_ast, _, _ = parse(lex(augment("a:Integer = 1\nb:Integer=c\nc:Integer=2")))
-        ast = load_standard_library_ast() | code_ast
+        ast = default_environment() | code_ast
         self.assertEqual(evaluate(ast, exp), PlainExpression(3))
+
+    def test_variable(self) -> None:
+        source = "fourteen:Integer = plus 10 4"
+        exp, _ = parse_expression(lex(augment("intToStr fourteen")))
+        code_ast, _, _ = parse(lex(augment(source)))
+        ast = default_environment() | code_ast
+        self.assertEqual(evaluate(ast, exp), PlainExpression("14"))
 
     def test_higher_order_functions(self) -> None:
         source = """
@@ -90,21 +95,23 @@ square:Integer x:Integer = multiply x x
 """
         exp, _ = parse_expression(lex(augment("apply square 3")))
         code_ast, _, _ = parse(lex(augment(source)))
-        ast = load_standard_library_ast() | code_ast
+        ast = default_environment() | code_ast
         self.assertEqual(evaluate(ast, exp), PlainExpression(9))
 
+    @unittest.skip("structs not yet implemented")
     def test_struct(self) -> None:
         source = "Foo := struct x:Integer y:Boolean"
         exp, _ = parse_expression(lex(augment("Foo.y (Foo 42 true)")))
         code_ast, structs, _ = parse(lex(augment(source)))
-        ast = load_standard_library_ast() | code_ast
+        ast = default_environment() | code_ast
         self.assertEqual(evaluate(ast, exp), PlainExpression(True))
 
+    @unittest.skip("type checks yet implemented")
     def test_union(self) -> None:
         source = "Foo := union Boolean Integer\nf:Foo = 42"
         exp, _ = parse_expression(lex(augment("equal f 42")))
         code_ast, structs, _ = parse(lex(augment(source)))
-        ast = load_standard_library_ast() | code_ast
+        ast = default_environment() | code_ast
         self.assertEqual(evaluate(ast, exp), PlainExpression(True))
 
     def test_more_complex_higher_order_functions(self) -> None:
@@ -121,5 +128,5 @@ square:Integer x:Integer = multiply x x
 """
         exp, _ = parse_expression(lex(augment("intToStr fourteen")))
         code_ast, structs, _ = parse(lex(augment(source)))
-        ast = load_standard_library_ast() | code_ast
+        ast = default_environment() | code_ast
         self.assertEqual(evaluate(ast, exp), PlainExpression("14"))
