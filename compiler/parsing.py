@@ -102,9 +102,9 @@ class Variable(Expression):
 
 
 @dataclass
-class Call(Expression):
+class Function(Expression):
     params: List[Parameter]
-    expressions: Sequence[Expression]
+    body: Sequence[Expression]
 
 
 def get_const_int(exp: PlainExpression) -> int:
@@ -164,7 +164,7 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
         if len(expressions) == 1:
             return Variable(func_name), idx
         else:
-            return Call([], expressions), idx
+            return Function([], expressions), idx
     assert False
 
 
@@ -238,7 +238,7 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, Union, int]:
 
 
 def parse(tokens: List[Token]) \
-        -> Tuple[Dict[str, Call], Dict[str, Struct], Dict[str, Union]]:
+        -> Tuple[Dict[str, Function], Dict[str, Struct], Dict[str, Union]]:
     definitions: Dict[str, Expression] = {}
     structs: Dict[str, Struct] = {}
     unions: Dict[str, Union] = {}

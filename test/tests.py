@@ -3,7 +3,7 @@ import unittest
 from compiler import augment
 from compiler.interpreting import evaluate, load_standard_library_ast
 from compiler.lexing import Name, Colon, Assignment, Semicolon, lex
-from compiler.parsing import parse_type, TypeSignaturePlain, TypeSignatureFunction, parse_expression, Call, \
+from compiler.parsing import parse_type, TypeSignaturePlain, TypeSignatureFunction, parse_expression, Function, \
     PlainExpression, parse, Variable
 
 
@@ -44,7 +44,7 @@ class TestFoo(unittest.TestCase):
 
     def test_parse_plain_expression(self) -> None:
         self.assertEqual(parse_expression(lex(augment("plus 1 2"))),
-                         (Call([], [
+                         (Function([], [
                              Variable("plus"),
                              PlainExpression(1),
                              PlainExpression(2)]),
@@ -52,10 +52,10 @@ class TestFoo(unittest.TestCase):
 
     def test_parse_parenthesised_expression(self) -> None:
         self.assertEqual(parse_expression(lex(augment("plus (minus 3 2) (multiply 4 5)"))),
-                         (Call([], [
+                         (Function([], [
                              Variable("plus"),
-                             Call([], [Variable("minus"), PlainExpression(3), PlainExpression(2)]),
-                             Call([], [Variable("multiply"), PlainExpression(4), PlainExpression(5)])]),
+                             Function([], [Variable("minus"), PlainExpression(3), PlainExpression(2)]),
+                             Function([], [Variable("multiply"), PlainExpression(4), PlainExpression(5)])]),
                           11))
 
     def test_load_standard_library(self) -> None:
@@ -67,6 +67,7 @@ class TestFoo(unittest.TestCase):
 
     def test_evaluate_nested_expression(self) -> None:
         exp, _ = parse_expression(lex(augment("intToStr (plus (plus 1 1) (plus 1 (plus 1 1)))")))
+        print(f"{exp=}")  # todo: remove
         self.assertEqual(evaluate(load_standard_library_ast(), exp),
                          PlainExpression("5"))
 

@@ -4,7 +4,7 @@ from typing import Dict, List, Any, Callable
 from .augmenting import augment
 from .lexing import lex
 from .parsing import Expression, \
-    Call, TypeSignaturePlain, TypeSignature, get_const_str, get_const_int, Struct, \
+    Function, TypeSignaturePlain, TypeSignature, get_const_str, get_const_int, Struct, \
     parse, PlainExpression, Variable, Parameter
 
 
@@ -71,26 +71,9 @@ def assert_types_match(target_type: TypeSignature, expression: Any) -> None:
     # todo: check non-plain types too
 
 
-def bind(arguments: Dict[str, Expression], call: Call) -> Call:
-    def replace_variable(a: Expression) -> Expression:
-        if isinstance(a, PlainExpression):
-            return a
-        if isinstance(a, Call):
-            return bind(arguments, Call(list(map(partial(bind, arguments), a.expressions))))
-        if isinstance(a, Variable):
-            if a.name in arguments:
-                return arguments[a.name]
-            else:
-                return a
-        assert False
-
-    return Call(list(map(replace_variable, call.expressions)))
-
-
 def augment_env(env: Dict[str, Expression],
                 parameters: List[Parameter],
                 args: List[Expression]) -> Dict[str, Expression]:
-    # todo: make sure things in the original env can be overwritten (shadowed)
     parameter_names = list(map(lambda p: p.name, parameters))
     return env | dict(zip(parameter_names, args))
 
@@ -98,7 +81,6 @@ def augment_env(env: Dict[str, Expression],
 def apply_builtin(function: Variable, args: List[Expression]) -> Expression:
     global_name = function.name.split("__")[-1]
     f: Callable[[Any], Expression] = globals()[global_name]
-
     return f(*args)
 
 
@@ -107,7 +89,7 @@ def apply(environment: Dict[str, Expression], function: Expression, args: List[E
     if isinstance(function, Variable):
         assert function.name.startswith("__builtin__")
         return apply_builtin(function, args)
-    assert isinstance(function, Call)
+    assert isinstance(function, Function)
     augmented_environment = augment_env(environment, function.params, args)
     return evaluate(augmented_environment, function)
 
@@ -119,31 +101,27 @@ def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expr
     if isinstance(expression, Variable):
         if expression.name.startswith("__builtin__"):
             return expression
-        #return environment[expression.name]
-        ret = environment[expression.name]
-        #if not isinstance(ret, Variable):
-        #    return ret
-        return evaluate(environment, ret)
-    assert isinstance(expression, Call)
-    first_expression = expression.expressions[0]
+        return evaluate(environment, environment[expression.name])
+    assert isinstance(expression, Function)
+    first_expression = expression.body[0]
     if isinstance(first_expression, Variable) and first_expression.name == "ifElse":
         raise RuntimeError("ifElse not yet implemented")
-    evaluated_expressions = list(map(partial(evaluate, environment), expression.expressions))
+    evaluated_expressions = list(map(partial(evaluate, environment), expression.body))
     function, args = evaluated_expressions[0], evaluated_expressions[1:]
     return apply(environment, function, args)
 
 
 def load_standard_library_ast() -> Dict[str, Expression]:
     standard_library_source = """printLine:None message:String = __builtin__printline
-concat:String a:String b:String = __builtin__concat
-intToStr:String a:Integer = __builtin__inttostr
-plus:Integer a:Integer b:Integer = __builtin__plus
-minus:Integer a:Integer b:Integer = __builtin__minus
-multiply:Integer a:Integer b:Integer = __builtin__multiply
-modulo:Integer a:Integer b:Integer = __builtin__modulo
-less:Boolean a:Integer b:Integer = __builtin__less
-greater:Boolean a:Integer b:Integer = __builtin__greater
-equal:Boolean a:Integer b:Integer = __builtin__equal"""
+concat:String a:String b:String = __builtin__concat a b
+intToStr:String a:Integer = __builtin__inttostr a
+plus:Integer a:Integer b:Integer = __builtin__plus a b
+minus:Integer a:Integer b:Integer = __builtin__minus a b
+multiply:Integer a:Integer b:Integer = __builtin__multiply a b
+modulo:Integer a:Integer b:Integer = __builtin__modulo a b
+less:Boolean a:Integer b:Integer = __builtin__less a b
+greater:Boolean a:Integer b:Integer = __builtin__greater a b
+equal:Boolean a:Integer b:Integer = __builtin__equal a b"""
     standard_library_ast, _, _ = parse(lex(augment(standard_library_source)))
     return standard_library_ast
 
