@@ -5,8 +5,7 @@ from dataclasses import dataclass
 from typing import List, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
-from .builtins import default_environment
-from .expressions import Expression, PlainExpression, Variable, Parameter, CompoundProcedure, Application, Function
+from .expressions import Expression, PlainExpression, Variable, Parameter, Application, Function
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma, ColonEqual
 
@@ -153,6 +152,7 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Expression, int]:
     if len(params) == 0:
         return def_name, expression, idx
     else:
+        assert isinstance(expression, Application)
         return def_name, Function(params, expression), idx
 
 
