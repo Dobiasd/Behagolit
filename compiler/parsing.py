@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC
 from dataclasses import dataclass
 from typing import List, Sequence, Dict, Tuple
@@ -17,6 +19,11 @@ class MyTypeChecker(Generic[T]):
 
 @dataclass
 class TypeSignature(ABC):
+    pass
+
+
+@dataclass
+class TypeSignatureUnknown(TypeSignature):
     pass
 
 
@@ -74,9 +81,8 @@ def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
 
 
 @dataclass
-class Parameter(Token):
+class Parameter:
     name: str
-    type_sig: TypeSignature
 
 
 @dataclass
@@ -86,39 +92,40 @@ class Expression(ABC):
 
 @dataclass
 class PlainExpression(Expression):
-    type_sig: TypeSignaturePlain
+    #type_sig: TypeSignaturePlain
     value: Any
 
 
 @dataclass
+class Variable(Expression):
+    name: str
+
+
+@dataclass
 class Call(Expression):
-    function_name: str
-    args: Sequence[Expression]
+    params: List[Parameter]
+    expressions: Sequence[Expression]
 
 
 def get_const_int(exp: PlainExpression) -> int:
-    assert exp.type_sig == TypeSignaturePlain("Integer")
+#    assert exp.type_sig == TypeSignaturePlain("Integer")
     assert isinstance(exp.value, int)
     return exp.value
 
 
 def get_const_str(exp: PlainExpression) -> str:
-    assert exp.type_sig == TypeSignaturePlain("String")
+   # assert exp.type_sig == TypeSignaturePlain("String")
     assert isinstance(exp.value, str)
     return exp.value
 
 
 def get_const_bool(exp: PlainExpression) -> bool:
-    assert exp.type_sig == TypeSignaturePlain("Boolean")
+   # assert exp.type_sig == TypeSignaturePlain("Boolean")
     assert isinstance(exp.value, bool)
     return exp.value
 
 
-@dataclass
-class Definition:
-    def_type: TypeSignature
-    params: List[Parameter]
-    expression: Expression
+
 
 
 def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> Tuple[Expression, int]:
@@ -126,13 +133,13 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
     curr = tokens[idx]
     if isinstance(curr, StringConstant):
         idx += 1
-        return PlainExpression(TypeSignaturePlain("String"), curr.value), idx
+        return PlainExpression(curr.value), idx
     if isinstance(curr, IntegerConstant):
         idx += 1
-        return PlainExpression(TypeSignaturePlain("Integer"), curr.value), idx
+        return PlainExpression(curr.value), idx
     if isinstance(curr, BoolConstant):
         idx += 1
-        return PlainExpression(TypeSignaturePlain("Boolean"), curr.value), idx
+        return PlainExpression(curr.value), idx
     if isinstance(curr, LeftParenthesis):
         idx += 1
         exp, progress = parse_expression(tokens[idx:])
@@ -144,17 +151,20 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
         assert isinstance(curr, Name)
         func_name = curr.value
         idx += 1
-        args: List[Expression] = []
+        expressions: List[Expression] = [Variable(func_name)]
         if not allow_eat_args_right:
-            return Call(func_name, args), idx
+            return Variable(func_name), idx
         while not isinstance(tokens[idx], Semicolon) and not isinstance(tokens[idx], RightParenthesis):
             if isinstance(tokens[idx], LeftParenthesis):
-                arg, progress = parse_expression(tokens[idx:])
+                exp, progress = parse_expression(tokens[idx:])
             else:
-                arg, progress = parse_expression(tokens[idx:], allow_eat_args_right=False)
+                exp, progress = parse_expression(tokens[idx:], allow_eat_args_right=False)
             idx += progress
-            args.append(arg)
-        return Call(func_name, args), idx
+            expressions.append(exp)
+        if len(expressions) == 1:
+            return Variable(func_name), idx
+        else:
+            return Call([], expressions), idx
     assert False
 
 
@@ -173,21 +183,21 @@ def parse_typed_name(tokens: List[Token]) -> Tuple[str, TypeSignature, int]:
     return def_name, def_type, idx
 
 
-def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
+def parse_definition(tokens: List[Token]) -> Tuple[str, Expression, int]:
     idx = 0
     def_name, def_type, progress = parse_typed_name(tokens[idx:])
     idx += progress
     params = []
     while not isinstance(tokens[idx], Assignment):
         param_name, param_type, progress = parse_typed_name(tokens[idx:])
-        params.append(Parameter(param_name, param_type))
+        params.append(Parameter(param_name))
         idx += progress
-
     assert isinstance(tokens[idx], Assignment)
     idx += 1
     expression, progress = parse_expression(tokens[idx:])
+    expression.params = params
     idx += progress
-    return def_name, Definition(def_type, params, expression), idx
+    return def_name, expression, idx
 
 
 def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
@@ -228,8 +238,8 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, Union, int]:
 
 
 def parse(tokens: List[Token]) \
-        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Union]]:
-    definitions: Dict[str, Definition] = {}
+        -> Tuple[Dict[str, Call], Dict[str, Struct], Dict[str, Union]]:
+    definitions: Dict[str, Expression] = {}
     structs: Dict[str, Struct] = {}
     unions: Dict[str, Union] = {}
 
@@ -255,4 +265,8 @@ def parse(tokens: List[Token]) \
             definitions[def_name] = definition
         while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
             idx += 1
+    # todo: remove
+    print(f"{definitions=}")
+    print(f"{structs=}")
+    print(f"{unions=}")
     return definitions, structs, unions

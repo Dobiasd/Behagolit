@@ -3,9 +3,9 @@ from typing import Dict, List, Any, Callable
 
 from .augmenting import augment
 from .lexing import lex
-from .parsing import Definition, Expression, \
+from .parsing import Expression, \
     Call, TypeSignaturePlain, TypeSignature, get_const_str, get_const_int, Struct, \
-    parse, PlainExpression
+    parse, PlainExpression, Variable, Parameter
 
 
 def printline(text: PlainExpression) -> None:
@@ -22,35 +22,35 @@ def concat(*args: PlainExpression) -> PlainExpression:
 
 
 def inttostr(number: PlainExpression) -> PlainExpression:
-    return PlainExpression(TypeSignaturePlain("String"), str(get_const_int(number)))
+    return PlainExpression(str(get_const_int(number)))
 
 
 def plus(a: PlainExpression, b: PlainExpression) -> PlainExpression:
-    return PlainExpression(TypeSignaturePlain("Integer"), get_const_int(a) + get_const_int(b))
+    return PlainExpression(get_const_int(a) + get_const_int(b))
 
 
 def minus(a: PlainExpression, b: PlainExpression) -> PlainExpression:
-    return PlainExpression(TypeSignaturePlain("Integer"), get_const_int(a) - get_const_int(b))
+    return PlainExpression(get_const_int(a) - get_const_int(b))
 
 
 def multiply(a: PlainExpression, b: PlainExpression) -> PlainExpression:
-    return PlainExpression(TypeSignaturePlain("Integer"), get_const_int(a) * get_const_int(b))
+    return PlainExpression(get_const_int(a) * get_const_int(b))
 
 
 def modulo(a: PlainExpression, b: PlainExpression) -> PlainExpression:
-    return PlainExpression(TypeSignaturePlain("Integer"), get_const_int(a) * get_const_int(b))
+    return PlainExpression(get_const_int(a) * get_const_int(b))
 
 
 def less(a: PlainExpression, b: PlainExpression) -> PlainExpression:
-    return PlainExpression(TypeSignaturePlain("Boolean"), get_const_int(a) < get_const_int(b))
+    return PlainExpression(get_const_int(a) < get_const_int(b))
 
 
 def greater(a: PlainExpression, b: PlainExpression) -> PlainExpression:
-    return PlainExpression(TypeSignaturePlain("Boolean"), get_const_int(a) > get_const_int(b))
+    return PlainExpression(get_const_int(a) > get_const_int(b))
 
 
 def equal(a: PlainExpression, b: PlainExpression) -> PlainExpression:
-    return PlainExpression(TypeSignaturePlain("Boolean"), a.value == b.value)
+    return PlainExpression(a.value == b.value)
 
 
 def fqn(scope: List[str], name: str) -> str:
@@ -71,59 +71,69 @@ def assert_types_match(target_type: TypeSignature, expression: Any) -> None:
     # todo: check non-plain types too
 
 
-def evaluate(ast: Dict[str, Definition],
-             structs: Dict[str, Struct],
-             unions: Dict[str, List[TypeSignature]],
-             scope: List[str],
-             expression: Expression) -> Expression:
+def bind(arguments: Dict[str, Expression], call: Call) -> Call:
+    def replace_variable(a: Expression) -> Expression:
+        if isinstance(a, PlainExpression):
+            return a
+        if isinstance(a, Call):
+            return bind(arguments, Call(list(map(partial(bind, arguments), a.expressions))))
+        if isinstance(a, Variable):
+            if a.name in arguments:
+                return arguments[a.name]
+            else:
+                return a
+        assert False
+
+    return Call(list(map(replace_variable, call.expressions)))
+
+
+def augment_env(env: Dict[str, Expression],
+                parameters: List[Parameter],
+                args: List[Expression]) -> Dict[str, Expression]:
+    # todo: make sure things in the original env can be overwritten (shadowed)
+    parameter_names = list(map(lambda p: p.name, parameters))
+    return env | dict(zip(parameter_names, args))
+
+
+def apply_builtin(function: Variable, args: List[Expression]) -> Expression:
+    global_name = function.name.split("__")[-1]
+    f: Callable[[Any], Expression] = globals()[global_name]
+
+    return f(*args)
+
+
+# https://wiki.c2.com/?EvalApply
+def apply(environment: Dict[str, Expression], function: Expression, args: List[Expression]) -> Expression:
+    if isinstance(function, Variable):
+        assert function.name.startswith("__builtin__")
+        return apply_builtin(function, args)
+    assert isinstance(function, Call)
+    augmented_environment = augment_env(environment, function.params, args)
+    return evaluate(augmented_environment, function)
+
+
+# https://github.com/reah/scheme_interpreter/blob/master/scheme.py
+def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expression:
     if isinstance(expression, PlainExpression):
         return expression
-    if isinstance(expression, Call):
-        if expression.function_name == "ifElse":
-            assert len(expression.args) == 3
-            cond = evaluate(ast, structs, unions, scope, expression.args[0])
-            assert isinstance(cond, PlainExpression)
-            assert cond.type_sig == TypeSignaturePlain("Boolean")
-            if cond.value:
-                return evaluate(ast, structs, unions, scope, expression.args[1])
-            else:
-                return evaluate(ast, structs, unions, scope, expression.args[2])
-        evaluated_args = list(map(partial(evaluate, ast, structs, unions, scope), expression.args))
-        definition = ast.get(expression.function_name, None)
-        if definition is not None:
-            if len(expression.args) == 0 and len(definition.params) != 0:  # no partial application yet
-                return definition.expression
-            for param, arg in zip(definition.params, evaluated_args):
-                assert_types_match(param.type_sig, arg)
-            if isinstance(definition.expression, Call) and definition.expression.function_name.startswith(
-                    "__builtin__") and len(definition.expression.args) == 0:
-                global_name = definition.expression.function_name.split("__")[-1]
-                f: Callable[[Any], Expression] = globals()[global_name]
-                return f(*evaluated_args)
-            extension = dict(  # todo params
-                map(lambda p, a: (p.name, Definition(p.type_sig, [], a)), definition.params, evaluated_args))
-            extended_ast = ast | extension
-            return evaluate(extended_ast, structs, unions, [expression.function_name],
-                            definition.expression)
-        struct = structs.get(expression.function_name, None)
-        if struct is not None:
-            field_names = list(map(lambda field: field.name, struct.fields))
-            return PlainExpression(TypeSignaturePlain(expression.function_name), dict(zip(field_names, evaluated_args)))
-        if "." in expression.function_name:
-            splitted = expression.function_name.split(".")
-            struct_name = splitted[0]
-            field_name = splitted[1]
-            assert len(evaluated_args) == 1
-            getter_arg = evaluated_args[0]
-            assert isinstance(getter_arg, PlainExpression)
-            assert struct_name == getter_arg.type_sig.name
-            result: Expression = getter_arg.value[field_name]
-            return result
-        assert False
-    raise RuntimeError("Wat")
+    if isinstance(expression, Variable):
+        if expression.name.startswith("__builtin__"):
+            return expression
+        #return environment[expression.name]
+        ret = environment[expression.name]
+        #if not isinstance(ret, Variable):
+        #    return ret
+        return evaluate(environment, ret)
+    assert isinstance(expression, Call)
+    first_expression = expression.expressions[0]
+    if isinstance(first_expression, Variable) and first_expression.name == "ifElse":
+        raise RuntimeError("ifElse not yet implemented")
+    evaluated_expressions = list(map(partial(evaluate, environment), expression.expressions))
+    function, args = evaluated_expressions[0], evaluated_expressions[1:]
+    return apply(environment, function, args)
 
 
-def load_standard_library_ast() -> Dict[str, Definition]:
+def load_standard_library_ast() -> Dict[str, Expression]:
     standard_library_source = """printLine:None message:String = __builtin__printline
 concat:String a:String b:String = __builtin__concat
 intToStr:String a:Integer = __builtin__inttostr
@@ -138,11 +148,7 @@ equal:Boolean a:Integer b:Integer = __builtin__equal"""
     return standard_library_ast
 
 
-def interpret(ast: Dict[str, Definition], custom_struct_types: Dict[str, Struct], getters: Dict[str, Any],
+def interpret(ast: Dict[str, Expression], custom_struct_types: Dict[str, Struct], getters: Dict[str, Any],
               unions: Dict[str, List[TypeSignature]]) -> None:
     main = ast["main"]
-    assert len(main.params) == 0
-    assert isinstance(main.expression, Call)
-
-    extended_ast = ast | load_standard_library_ast()
-    evaluate(extended_ast, custom_struct_types, unions, ["main"], main.expression)
+    evaluate(custom_struct_types, unions, load_standard_library_ast(), main)
