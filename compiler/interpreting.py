@@ -2,9 +2,9 @@ from functools import partial
 from typing import Dict, List, Any, Sequence
 
 from .builtins import default_environment
-from .expressions import PrimitiveProcedure, Procedure, Function
-from .parsing import Expression, Application, TypeSignature, Struct, PlainExpression, Variable, Parameter, \
-    CompoundProcedure
+from .expressions import PrimitiveProcedure, Procedure, Function, Expression, Application, PlainExpression, Variable, \
+    Parameter, CompoundProcedure
+from .parsing import TypeSignature, Struct
 
 
 def fqn(scope: List[str], name: str) -> str:
@@ -24,18 +24,15 @@ def extend_env(env: Dict[str, Expression],
 
 
 def apply_primitive_procedure(procedure: PrimitiveProcedure, arguments: Sequence[Expression]) -> Expression:
-    return procedure.impl(*arguments)  # type:ignore
+    return procedure.impl(*list_of_values(procedure.env, arguments))  # type:ignore
 
 
-def make_procedure(parameters: List[Parameter], body: Sequence[Expression], env: Dict[str, Expression]) -> Procedure:
+def make_procedure(parameters: List[Parameter], body: Application, env: Dict[str, Expression]) -> Procedure:
     return CompoundProcedure(parameters, env, body)
 
 
-def eval_sequence(environment: Dict[str, Expression], expressions: Sequence[Expression]) -> Expression:
-    if len(expressions) == 1:
-        return evaluate(environment, expressions[0])
-    else:
-        return evaluate(environment, Application(expressions[0], expressions[1:]))
+def eval_sequence(environment: Dict[str, Expression], application: Application) -> Expression:
+    return evaluate(environment, Application(application.operator, application.operands))
 
 
 # https://wiki.c2.com/?EvalApply
@@ -64,6 +61,7 @@ def lookup_variable_value(environment: Dict[str, Expression], name: str) -> Expr
 
 # https://github.com/reah/scheme_interpreter/blob/master/scheme.py
 def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expression:
+    environment = default_environment() | environment
     # todo: remove
     print(f"{expression=}")
     print(f"{environment=}")
@@ -76,6 +74,8 @@ def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expr
     if isinstance(expression, Function):
         # todo: does this ever happen?
         return make_procedure(expression.parameters, expression.body, environment)
+    if isinstance(expression, CompoundProcedure):
+        return expression
     if isinstance(expression, Application):
         evaluated_operator = evaluate(environment, expression.operator)
         assert isinstance(evaluated_operator, Procedure)

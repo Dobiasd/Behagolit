@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
 from .builtins import default_environment
-from .expressions import Expression, PlainExpression, Variable, Parameter, CompoundProcedure, Application
+from .expressions import Expression, PlainExpression, Variable, Parameter, CompoundProcedure, Application, Function
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma, ColonEqual
 
@@ -153,7 +153,7 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Expression, int]:
     if len(params) == 0:
         return def_name, expression, idx
     else:
-        return def_name, CompoundProcedure(params, default_environment(), [expression]), idx
+        return def_name, Function(params, expression), idx
 
 
 def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:

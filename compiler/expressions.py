@@ -19,11 +19,6 @@ class PlainExpression(Expression):
     value: Any
 
 
-@dataclass
-class Function(Expression):
-    parameters: List[Parameter]
-    body: Sequence[Expression]
-
 
 @dataclass
 class Variable(Expression):
@@ -35,6 +30,11 @@ class Application(Expression):
     operator: Expression
     operands: Sequence[Expression]
 
+@dataclass
+class Function(Expression):
+    parameters: List[Parameter]
+    body: Application
+
 
 @dataclass
 class Procedure(Expression):
@@ -44,7 +44,7 @@ class Procedure(Expression):
 
 @dataclass
 class CompoundProcedure(Procedure):
-    body: Sequence[Expression]
+    body: Application
 
 
 @dataclass
