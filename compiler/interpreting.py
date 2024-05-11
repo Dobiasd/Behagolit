@@ -68,8 +68,6 @@ def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expr
     if isinstance(expression, PlainExpression) or isinstance(expression, PrimitiveProcedure):
         return expression
     if isinstance(expression, Variable):
-        # todo: which
-        #return lookup_variable_value(environment, expression.name)
         return evaluate(environment, lookup_variable_value(environment, expression.name))
     if isinstance(expression, Function):
         # todo: does this ever happen?
@@ -77,6 +75,12 @@ def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expr
     if isinstance(expression, CompoundProcedure):
         return expression
     if isinstance(expression, Application):
+        if isinstance(expression.operator, Variable) and expression.operator.name == "ifElse":
+            assert len(expression.operands) == 3
+            if evaluate(environment, expression.operands[0]):
+                return evaluate(environment, expression.operands[1])
+            else:
+                return evaluate(environment, expression.operands[2])
         evaluated_operator = evaluate(environment, expression.operator)
         assert isinstance(evaluated_operator, Procedure)
         evaluated_operands = list_of_values(environment, expression.operands)
