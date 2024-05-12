@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Dict, List, Any
 
-from .builtins import default_environment
+from .built_ins import default_environment
 from .expressions import PrimitiveProcedure, Procedure, Function, Expression, Application, PlainExpression, Variable, \
     Parameter, CompoundProcedure
 from .parsing import TypeSignature, Struct

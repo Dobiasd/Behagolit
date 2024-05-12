@@ -1,11 +1,11 @@
 import unittest
 
-from compiler import augment
-from compiler.builtins import default_environment
-from compiler.interpreting import evaluate
-from compiler.lexing import Name, Colon, Assignment, Semicolon, lex
-from compiler.parsing import parse_type, TypeSignaturePlain, TypeSignatureFunction, parse_expression, Application, \
-    PlainExpression, parse, Variable
+from .augmenting import augment
+from .built_ins import default_environment
+from .expressions import Application, PlainExpression, Variable
+from .interpreting import evaluate
+from .lexing import Name, Colon, Assignment, Semicolon, lex
+from .parsing import parse_type, TypeSignaturePlain, TypeSignatureFunction, parse_expression, parse
 
 
 class TestBehagolit(unittest.TestCase):
