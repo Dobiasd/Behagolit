@@ -1,8 +1,9 @@
 # Behagolit
 
-This document outlines a new function-call syntax, which could be used in a (not-yet-existing) programming language named "behagolit".
+This document outlines a new function-call syntax, which could be used in a (not-yet-existing) programming language
+named "behagolit".
 
-## Common notation syntaxes for (mathematical and other) expressions 
+## Common notation syntaxes for (mathematical and other) expressions
 
 ### [Prefix notation](https://en.wikipedia.org/wiki/Polish_notation)
 
@@ -10,7 +11,8 @@ This document outlines a new function-call syntax, which could be used in a (not
 function arg1 arg2
 ```
 
-This is not only used in languages like Haskell etc, but also the function call syntax in many mainstream programming languages is somewhat similar, at least regarding the order of the three tokens:
+This is not only used in languages like Haskell etc, but also the function call syntax in many mainstream programming
+languages is somewhat similar, at least regarding the order of the three tokens:
 
 ```
 function(arg1, arg2)
@@ -29,7 +31,8 @@ add(1, 2)
 arg1 function arg2
 ```
 
-It's used for binary functions (functions with an arity of 2), and is very well known from mathematical notation. Example:
+It's used for binary functions (functions with an arity of 2), and is very well known from mathematical notation.
+Example:
 
 ```
 1 + 2
@@ -41,7 +44,8 @@ It's used for binary functions (functions with an arity of 2), and is very well 
 arg1 arg2 function
 ```
 
-This is not so common anymore. But in the past, it was popular in calculators, and it is used in stack-oriented programming languages such as Forth, etc.
+This is not so common anymore. But in the past, it was popular in calculators, and it is used in stack-oriented
+programming languages such as Forth, etc.
 
 Example:
 
@@ -72,11 +76,13 @@ arg1 arg2 function arg3
 arg1 arg2 arg3 function
 ```
 
-To disambiguate expressions containing more than one function application, expressions in ubiquefix notation are left-associative. The advantages of this choice will become apparent later.
+To disambiguate expressions containing more than one function application, expressions in ubiquefix notation are
+left-associative. The advantages of this choice will become apparent later.
 
 ## Partial function application
 
-A function fuses with its neighbor values until it's either full (-y applied) or until there are no more values left to fuse with.
+A function fuses with its neighbor values until it's either full (-y applied) or until there are no more values left to
+fuse with.
 
 Given a function taking an `A` and `B`, and returning a `C`
 
@@ -113,13 +119,15 @@ f b c : A -> D
 a f c : B -> D
 ```
 
-Here we can see that infix notation emerges automatically from first fusing with arguments on the left side (postfix style) and then fusing with arguments on the right side (prefix style):
+Here we can see that infix notation emerges automatically from first fusing with arguments on the left side (postfix
+style) and then fusing with arguments on the right side (prefix style):
 
 ```
 f : A, B -> C
 ```
 
-`a f b` is just `f` being first (partially) applied to `a` (`(a f) b`) resulting in an intermediate function of type `B -> C`, which is then applied to `c`.
+`a f b` is just `f` being first (partially) applied to `a` (`(a f) b`) resulting in an intermediate function of
+type `B -> C`, which is then applied to `c`.
 
 ### But why?
 
@@ -158,7 +166,8 @@ input splitOnComma stringsToIntegers squareIntegers
     squareIntegers = map square
 ```
 
-The definitions of these helper functions use partial function application (with prefix-like notation), which gives these helpers the following types:
+The definitions of these helper functions use partial function application (with prefix-like notation), which gives
+these helpers the following types:
 
 ```
 splitOnComma : String -> List[String]
@@ -166,7 +175,8 @@ stringsToIntegers : List[String] -> List[Integer]
 squareIntegers : List[Integer] -> Integer
 ```
 
-The pipeline itself (`input splitOnComma stringsToIntegers squareIntegers`) uses the postfix-notation style to let the data flow from left to right through the listed functions.
+The pipeline itself (`input splitOnComma stringsToIntegers squareIntegers`) uses the postfix-notation style to let the
+data flow from left to right through the listed functions.
 
 Using function composition, we could also do
 
@@ -177,7 +187,8 @@ input doTheThing
 
 ### Alleged ambiguities (and their resolution)
 
-If two functions are next to each other, the ambiguity of which is applied to which, is resolved by the type system, i.e., there are no situations in which both ways ("apply f to g" and "apply g to f") would work. Example:
+If two functions are next to each other, the ambiguity of which is applied to which, is resolved by the type system,
+i.e., there are no situations in which both ways ("apply f to g" and "apply g to f") would work. Example:
 
 ```
 f : A -> B
@@ -188,7 +199,8 @@ g : (A -> B) -> C
 f g
 ```
 
-`f` can't be applied to `g`, thus `g` is applied to `f`. (The same is true if we swap the order in the expression, i.e., have `g f`.)
+`f` can't be applied to `g`, thus `g` is applied to `f`. (The same is true if we swap the order in the expression, i.e.,
+have `g f`.)
 
 In case neither direction is valid, it's just a type error.
 
@@ -213,4 +225,5 @@ fAndThenG = f fwdCompose g
 
 We don't yet know.
 
-Sure, the fact, that the order of functions and their arguments is not the same in each (sub-) expression takes getting used to. But maybe it's worth it. We'll see! :)
+Sure, the fact, that the order of functions and their arguments is not the same in each (sub-) expression takes getting
+used to. But maybe it's worth it. We'll see! :)
