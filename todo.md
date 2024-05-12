@@ -1,14 +1,14 @@
 # todo
 
 - partial application
-- support empty structs, or at least None type, and make EmptyList in tests simpler
+- support empty structs, and use for EmptyList in tests
 - type checks
 - unions with non-plain options
 - support uniqefix notation
 - support list literals
 - adjust Ubiquefix.md to current syntax
 - union type check
-- scopes, nested definitions 
+- scopes, nested definitions
 - switch assert sides
 - type aliases?
 - automatic toString for every custom type?

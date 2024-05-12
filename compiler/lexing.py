@@ -33,6 +33,11 @@ class BoolConstant(Token):
 
 
 @dataclass
+class NoneConstant(Token):
+    pass
+
+
+@dataclass
 class StringConstant(Token):
     value: str
 
@@ -145,6 +150,8 @@ def lex(augmented_source_orig: str) -> List[Token]:
                 progress()
             if acc in ["true", "false"]:
                 tokens.append(BoolConstant(True if acc == "true" else False))
+            elif acc == "none":
+                tokens.append(NoneConstant())
             else:
                 tokens.append(Name(acc))
             continue

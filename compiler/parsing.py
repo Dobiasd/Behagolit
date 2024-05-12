@@ -8,7 +8,7 @@ from typing import TypeVar, Generic, Any
 
 from .expressions import Expression, PrimitiveExpression, Variable, Parameter, Call, Function, PrimitiveClosure
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
-    RightParenthesis, Colon, Arrow, Comma, ColonEqual
+    RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant
 
 T = TypeVar('T')
 
@@ -83,6 +83,9 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
     if isinstance(curr, BoolConstant):
         idx += 1
         return PrimitiveExpression(curr.value), idx
+    if isinstance(curr, NoneConstant):
+        idx += 1
+        return PrimitiveExpression(None), idx
     if isinstance(curr, LeftParenthesis):
         idx += 1
         exp, progress = parse_expression(tokens[idx:])
