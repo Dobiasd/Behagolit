@@ -8,7 +8,7 @@ from compiler.parsing import parse_type, TypeSignaturePlain, TypeSignatureFuncti
     PlainExpression, parse, Variable
 
 
-class TestFoo(unittest.TestCase):
+class TestBehagolit(unittest.TestCase):
 
     def test_augment(self) -> None:
         augmented = augment("foo\nbar")
@@ -65,7 +65,6 @@ class TestFoo(unittest.TestCase):
 
     def test_evaluate_nested_expression(self) -> None:
         exp, _ = parse_expression(lex(augment("intToStr (plus (plus 1 1) (plus 1 (plus 1 1)))")))
-        print(f"{exp=}")  # todo: remove
         self.assertEqual(evaluate(default_environment(), exp),
                          PlainExpression("5"))
 

@@ -27,8 +27,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-# todo: lexer: constants (int, float, str), maybe lists
-# todo: tokens -> parser -> ast (does also not yet know what a function is)
-# todo: figure out types
-# todo: ast with function calls etc, actual expressions
