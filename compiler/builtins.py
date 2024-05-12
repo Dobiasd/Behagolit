@@ -49,8 +49,12 @@ def multiply(a: PlainExpression, b: PlainExpression) -> PlainExpression:
     return PlainExpression(get_const_int(a) * get_const_int(b))
 
 
+def divide(a: PlainExpression, b: PlainExpression) -> PlainExpression:
+    return PlainExpression(get_const_int(a) // get_const_int(b))
+
+
 def modulo(a: PlainExpression, b: PlainExpression) -> PlainExpression:
-    return PlainExpression(get_const_int(a) * get_const_int(b))
+    return PlainExpression(get_const_int(a) % get_const_int(b))
 
 
 def less(a: PlainExpression, b: PlainExpression) -> PlainExpression:
@@ -73,6 +77,7 @@ def default_environment() -> Dict[str, Expression]:
         "plus": PrimitiveProcedure([Parameter("message")], {}, plus),
         "minus": PrimitiveProcedure([Parameter("message")], {}, minus),
         "multiply": PrimitiveProcedure([Parameter("message")], {}, multiply),
+        "divide": PrimitiveProcedure([Parameter("message")], {}, divide),
         "modulo": PrimitiveProcedure([Parameter("message")], {}, modulo),
         "less": PrimitiveProcedure([Parameter("message")], {}, less),
         "greater": PrimitiveProcedure([Parameter("message")], {}, greater),

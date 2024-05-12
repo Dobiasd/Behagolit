@@ -114,6 +114,18 @@ square:Integer x:Integer = multiply x x
 
     def test_more_complex_higher_order_functions(self) -> None:
         source = """
+main:None = printLine message
+message:String = concat "Hello, world!" (concat "\\n" answerSentence)
+answerSentence:String = tellFact "answer" theAnswer
+theAnswer:String = ifElse true fourtyTwoRepr "No."
+tellFact:String name:String value:String = concat "The " (concat name (concat " is: " value))
+fourtyTwoRepr:String = intToStr fourtyTwo
+fourtyTwo:Integer = plus fourteen (plus 15 thirteen)
+thirteen:Integer = divide (plus (modulo 29 19) (plus (fib 8) sixty)) 7
+fib:Integer n:Integer = ifElse (less n 2) n (plus (fib (minus n 1)) (fib (minus n 2)))
+sixty:Integer = plus (multiply 10 (TwoDigitNumber.tens weirdSixty)) (TwoDigitNumber.ones weirdSixty)
+TwoDigitNumber := struct tens:Integer ones:Integer
+weirdSixty:TwoDigitNumber = TwoDigitNumber 6 0
 fourteen:Integer = sum (map oneTwoThree square)
 oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 (EmptyList 0)))
 IntListElem := struct head:Integer tail:IntList
@@ -122,9 +134,8 @@ IntList := union EmptyList | IntListElem
 sum:Integer xs:IntList = foldr plus 0 xs
 map:IntList xs:IntList f:(Integer -> Integer) = ifElse (equal xs (EmptyList 0)) (EmptyList 0) (IntListElem (f (IntListElem.head xs)) (map (IntListElem.tail xs) f))
 foldr:Integer f:(Integer, Integer -> Integer) acc:Integer xs:IntList = ifElse (equal xs (EmptyList 0)) acc (f (IntListElem.head xs) (foldr f acc (IntListElem.tail xs)))
-square:Integer x:Integer = multiply x x
-"""
-        exp, _ = parse_expression(lex(augment("intToStr fourteen")))
+square:Integer x:Integer = multiply x x"""
+        exp, _ = parse_expression(lex(augment("message")))
         code_ast, structs, _ = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PlainExpression("14"))
+        self.assertEqual(evaluate(ast, exp), PlainExpression("Hello, world!\nThe answer is: 42"))
