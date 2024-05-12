@@ -224,8 +224,13 @@ def parse(tokens: List[Token]) \
         definitions[name] = PrimitiveProcedure(list(map(lambda f: Parameter(f), struct.fields)), {},
                                                partial(create_struct, struct.fields))
         for field in struct.fields:
-            definitions[name + "." + field] = PrimitiveProcedure([Parameter("s")], {}, lambda s: s[field])
+            definitions[name + "." + field] = PrimitiveProcedure([Parameter("s")], {}, partial(get_struct_field, field))
     return definitions, structs, unions
+
+
+def get_struct_field(field_name: str, struct: PlainExpression) -> PlainExpression:
+    assert isinstance(struct.value, dict)
+    return struct.value[field_name]
 
 
 def create_struct(field_names: List[str], *args: List[Expression]) -> PlainExpression:
