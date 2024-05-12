@@ -98,7 +98,6 @@ square:Integer x:Integer = multiply x x
         ast = default_environment() | code_ast
         self.assertEqual(evaluate(ast, exp), PlainExpression(9))
 
-    @unittest.skip("structs not yet implemented")
     def test_struct(self) -> None:
         source = "Foo := struct x:Integer y:Boolean"
         exp, _ = parse_expression(lex(augment("Foo.y (Foo 42 true)")))
