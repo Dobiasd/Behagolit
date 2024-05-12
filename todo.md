@@ -5,8 +5,9 @@
 - unions with non-plain options
 - support uniqefix notation
 - support list literals
+- adjust Ubiquefix.md to current syntax
 - union type check
-- scopes
+- scopes, nested definitions 
 - switch assert sides
 - type aliases?
 - automatic toString for every custom type?
