@@ -216,10 +216,6 @@ def parse(tokens: List[Token]) \
             definitions[def_name] = definition
         while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
             idx += 1
-    # todo: remove
-    print(f"{definitions=}")
-    print(f"{structs=}")
-    print(f"{unions=}")
     for name, struct in structs.items():
         definitions[name] = PrimitiveProcedure(list(map(lambda f: Parameter(f), struct.fields)), {},
                                                partial(create_struct, struct.fields))

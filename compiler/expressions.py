@@ -19,7 +19,6 @@ class PlainExpression(Expression):
     value: Any
 
 
-
 @dataclass
 class Variable(Expression):
     name: str
@@ -29,6 +28,7 @@ class Variable(Expression):
 class Application(Expression):
     operator: Expression
     operands: Sequence[Expression]
+
 
 @dataclass
 class Function(Expression):
