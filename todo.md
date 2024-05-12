@@ -1,6 +1,7 @@
 # todo
 
-- structs
+- type checks
+- support uniqefix notation
 - support list literals
 - union type check
 - scopes
