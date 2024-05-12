@@ -1,10 +1,9 @@
 from functools import partial
-from typing import Dict, List, Any
+from typing import Dict, List
 
 from .built_ins import default_environment
 from .expressions import PrimitiveProcedure, Procedure, Function, Expression, Application, PlainExpression, Variable, \
     Parameter, CompoundProcedure
-from .parsing import TypeSignature, Struct
 
 
 def fqn(scope: List[str], name: str) -> str:
@@ -60,7 +59,6 @@ def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expr
         raise RuntimeError(f"Unknown expression type: {expression}")
 
 
-def interpret(ast: Dict[str, Expression], custom_struct_types: Dict[str, Struct], getters: Dict[str, Any],
-              unions: Dict[str, List[TypeSignature]]) -> None:
+def interpret(ast: Dict[str, Expression]) -> None:
     main = ast["main"]
     evaluate(default_environment(), main)

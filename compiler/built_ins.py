@@ -4,19 +4,16 @@ from compiler.expressions import PlainExpression, Expression, Parameter, Primiti
 
 
 def get_const_int(exp: PlainExpression) -> int:
-    #    assert exp.type_sig == TypeSignaturePlain("Integer")
     assert isinstance(exp.value, int)
     return exp.value
 
 
 def get_const_str(exp: PlainExpression) -> str:
-    # assert exp.type_sig == TypeSignaturePlain("String")
     assert isinstance(exp.value, str)
     return exp.value
 
 
 def get_const_bool(exp: PlainExpression) -> bool:
-    # assert exp.type_sig == TypeSignaturePlain("Boolean")
     assert isinstance(exp.value, bool)
     return exp.value
 
