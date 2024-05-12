@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any, List, Sequence, Dict
+from typing import List, Sequence, Dict, Union, Callable
 
 
 @dataclass
@@ -14,8 +16,8 @@ class Expression(ABC):
 
 
 @dataclass
-class PlainExpression(Expression):
-    value: Any
+class PrimitiveExpression(Expression):
+    value: Union[str, bool, float, dict[str, PrimitiveExpression]]
 
 
 @dataclass
@@ -24,7 +26,7 @@ class Variable(Expression):
 
 
 @dataclass
-class Application(Expression):
+class Call(Expression):
     operator: Expression
     operands: Sequence[Expression]
 
@@ -32,20 +34,20 @@ class Application(Expression):
 @dataclass
 class Function(Expression):
     parameters: List[Parameter]
-    body: Application
+    body: Expression
 
 
 @dataclass
-class Procedure(Expression):
+class Closure(Expression):
     parameters: List[Parameter]
-    env: Dict[str, Expression]
+    environment: Dict[str, Expression]
 
 
 @dataclass
-class CompoundProcedure(Procedure):
-    body: Application
+class CompoundClosure(Closure):
+    body: Expression
 
 
 @dataclass
-class PrimitiveProcedure(Procedure):
-    impl: Any  # Callable something
+class PrimitiveClosure(Closure):
+    impl: Callable[..., PrimitiveExpression]

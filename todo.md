@@ -2,6 +2,7 @@
 
 - partial application
 - type checks
+- unions with non-plain options
 - support uniqefix notation
 - support list literals
 - union type check

@@ -6,7 +6,7 @@ from functools import partial
 from typing import List, Dict, Tuple
 from typing import TypeVar, Generic, Any
 
-from .expressions import Expression, PlainExpression, Variable, Parameter, Application, Function, PrimitiveProcedure
+from .expressions import Expression, PrimitiveExpression, Variable, Parameter, Call, Function, PrimitiveClosure
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma, ColonEqual
 
@@ -25,12 +25,7 @@ class TypeSignature(ABC):
 
 
 @dataclass
-class TypeSignatureUnknown(TypeSignature):
-    pass
-
-
-@dataclass
-class TypeSignaturePlain(TypeSignature):
+class TypeSignaturePrimitive(TypeSignature):
     name: str
 
 
@@ -55,7 +50,7 @@ def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
     curr = tokens[idx]
     idx += 1
     if isinstance(curr, Name):
-        return TypeSignaturePlain(curr.value), idx
+        return TypeSignaturePrimitive(curr.value), idx
     if isinstance(curr, LeftParenthesis):
         param_types = []
         new_type, progress = parse_type(tokens[idx:])
@@ -81,13 +76,13 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
     curr = tokens[idx]
     if isinstance(curr, StringConstant):
         idx += 1
-        return PlainExpression(curr.value), idx
+        return PrimitiveExpression(curr.value), idx
     if isinstance(curr, IntegerConstant):
         idx += 1
-        return PlainExpression(curr.value), idx
+        return PrimitiveExpression(curr.value), idx
     if isinstance(curr, BoolConstant):
         idx += 1
-        return PlainExpression(curr.value), idx
+        return PrimitiveExpression(curr.value), idx
     if isinstance(curr, LeftParenthesis):
         idx += 1
         exp, progress = parse_expression(tokens[idx:])
@@ -112,7 +107,7 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
         if len(expressions) == 1:
             return Variable(func_name), idx
         else:
-            return Application(expressions[0], expressions[1:]), idx
+            return Call(expressions[0], expressions[1:]), idx
     assert False
 
 
@@ -147,7 +142,6 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Expression, int]:
     if len(params) == 0:
         return def_name, expression, idx
     else:
-        assert isinstance(expression, Application)
         return def_name, Function(params, expression), idx
 
 
@@ -165,7 +159,7 @@ def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
     while idx < len(tokens) and not isinstance(tokens[idx], Semicolon):
         field_name, field_type, progress = parse_typed_name(tokens[idx:])
         idx += progress
-        fields.append(field_name)  # todo: use field_type
+        fields.append(field_name)
     return struct_name, Struct(fields), idx
 
 
@@ -184,7 +178,7 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, Union, int]:
         option = tokens[idx]
         assert isinstance(option, Name)
         idx += 1
-        options.append(TypeSignaturePlain(option.value))  # todo: support non-plain options
+        options.append(TypeSignaturePrimitive(option.value))
     return union_namme, Union(options), idx
 
 
@@ -217,19 +211,19 @@ def parse(tokens: List[Token]) \
         while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
             idx += 1
     for name, struct in structs.items():
-        definitions[name] = PrimitiveProcedure(list(map(lambda f: Parameter(f), struct.fields)), {},
-                                               partial(create_struct, struct.fields))
+        definitions[name] = PrimitiveClosure(list(map(lambda f: Parameter(f), struct.fields)), {},
+                                             partial(create_struct, struct.fields))
         for field in struct.fields:
-            definitions[name + "." + field] = PrimitiveProcedure([Parameter("s")], {}, partial(get_struct_field, field))
+            definitions[name + "." + field] = PrimitiveClosure([Parameter("s")], {}, partial(get_struct_field, field))
     return definitions, structs, unions
 
 
-def get_struct_field(field_name: str, struct: PlainExpression) -> PlainExpression:
+def get_struct_field(field_name: str, struct: PrimitiveExpression) -> PrimitiveExpression:
     assert isinstance(struct.value, dict)
     ret = struct.value[field_name]
-    assert isinstance(ret, PlainExpression)
+    assert isinstance(ret, PrimitiveExpression)
     return ret
 
 
-def create_struct(field_names: List[str], *args: List[Expression]) -> PlainExpression:
-    return PlainExpression(dict(zip(field_names, args)))
+def create_struct(field_names: List[str], *args: Expression) -> PrimitiveExpression:
+    return PrimitiveExpression(dict(zip(field_names, list(args))))
