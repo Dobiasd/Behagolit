@@ -77,7 +77,10 @@ def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expr
     if isinstance(expression, Application):
         if isinstance(expression.operator, Variable) and expression.operator.name == "ifElse":
             assert len(expression.operands) == 3
-            if evaluate(environment, expression.operands[0]):
+            condition = evaluate(environment, expression.operands[0])
+            assert isinstance(condition, PlainExpression)
+            assert isinstance(condition.value, bool)
+            if condition.value:
                 return evaluate(environment, expression.operands[1])
             else:
                 return evaluate(environment, expression.operands[2])
