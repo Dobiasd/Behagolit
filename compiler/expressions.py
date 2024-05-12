@@ -17,7 +17,7 @@ class Expression(ABC):
 
 @dataclass
 class PrimitiveExpression(Expression):
-    value: Union[str, bool, float, dict[str, PrimitiveExpression]]
+    value: Union[None, str, bool, float, dict[str, PrimitiveExpression]]
 
 
 @dataclass

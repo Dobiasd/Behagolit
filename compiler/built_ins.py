@@ -18,8 +18,9 @@ def get_const_bool(exp: PrimitiveExpression) -> bool:
     return exp.value
 
 
-def printline(text: PrimitiveExpression) -> None:
+def printline(text: PrimitiveExpression) -> PrimitiveExpression:
     print(text.value)
+    return PrimitiveExpression(None)
 
 
 def concat(*args: PrimitiveExpression) -> PrimitiveExpression:

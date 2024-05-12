@@ -225,5 +225,5 @@ def get_struct_field(field_name: str, struct: PrimitiveExpression) -> PrimitiveE
     return ret
 
 
-def create_struct(field_names: List[str], *args: Expression) -> PrimitiveExpression:
+def create_struct(field_names: List[str], *args: PrimitiveExpression) -> PrimitiveExpression:
     return PrimitiveExpression(dict(zip(field_names, list(args))))
