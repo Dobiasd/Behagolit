@@ -1,5 +1,6 @@
 # todo
 
+- partial application
 - type checks
 - support uniqefix notation
 - support list literals

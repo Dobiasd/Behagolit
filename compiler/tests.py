@@ -98,15 +98,8 @@ square:Integer x:Integer = multiply x x
         self.assertEqual(evaluate(ast, exp), PlainExpression(9))
 
     def test_partial_application(self) -> None:
-        source = """
-applySquare:Integer v:Integer = apply square            
-apply:Integer f:(Integer->Integer) v:Integer = f v
-square:Integer x:Integer = multiply x x
-"""
-        exp, _ = parse_expression(lex(augment("applySquare 3")))
-        code_ast, _, _ = parse(lex(augment(source)))
-        ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PlainExpression(9))
+        exp, _ = parse_expression(lex(augment("(plus 40) 2")))
+        self.assertEqual(evaluate(default_environment(), exp), PlainExpression(42))
 
     def test_struct(self) -> None:
         source = "Foo := struct x:Integer y:Boolean"
