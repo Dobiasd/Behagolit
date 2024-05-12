@@ -230,7 +230,9 @@ def parse(tokens: List[Token]) \
 
 def get_struct_field(field_name: str, struct: PlainExpression) -> PlainExpression:
     assert isinstance(struct.value, dict)
-    return struct.value[field_name]
+    ret = struct.value[field_name]
+    assert isinstance(ret, PlainExpression)
+    return ret
 
 
 def create_struct(field_names: List[str], *args: List[Expression]) -> PlainExpression:
