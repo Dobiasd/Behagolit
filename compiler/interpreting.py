@@ -29,34 +29,27 @@ def apply(closure: Closure, arguments: List[Expression]) -> Expression:
         extended_env = extend_env(closure.environment, closure.parameters, arguments)
         return evaluate(extended_env, closure.body)
     else:
-        raise RuntimeError(f"Unknown function type to apply: {closure}")
+        raise RuntimeError(f"Unknown closure type to apply: {closure}")
 
 
-def evaluate(environment: Dict[str, Expression], expression: Expression) -> Expression:
-    if isinstance(expression, PrimitiveExpression) or isinstance(expression, PrimitiveClosure):
-        return expression
-    if isinstance(expression, Variable):
-        return evaluate(environment, environment[expression.name])
-    if isinstance(expression, Function):
-        return CompoundClosure(expression.parameters, environment, expression.body)
-    if isinstance(expression, CompoundClosure):
-        return expression
-    if isinstance(expression, Call):
-        if isinstance(expression.operator, Variable) and expression.operator.name == "ifElse":
-            assert len(expression.operands) == 3
-            condition = evaluate(environment, expression.operands[0])
-            assert isinstance(condition, PrimitiveExpression)
-            assert isinstance(condition.value, bool)
-            if condition.value:
-                return evaluate(environment, expression.operands[1])
-            else:
-                return evaluate(environment, expression.operands[2])
-        evaluated_operator = evaluate(environment, expression.operator)
+def evaluate(environment: Dict[str, Expression], exp: Expression) -> Expression:
+    if isinstance(exp, PrimitiveExpression) or isinstance(exp, Closure):
+        return exp
+    if isinstance(exp, Variable):
+        return evaluate(environment, environment[exp.name])
+    if isinstance(exp, Function):
+        return CompoundClosure(exp.parameters, environment, exp.body)
+    if isinstance(exp, Call):
+        if isinstance(exp.operator, Variable) and exp.operator.name == "ifElse":
+            cond = evaluate(environment, exp.operands[0])
+            assert len(exp.operands) == 3 and isinstance(cond, PrimitiveExpression) and isinstance(cond.value, bool)
+            return evaluate(environment, exp.operands[1]) if cond.value else evaluate(environment, exp.operands[2])
+        evaluated_operator = evaluate(environment, exp.operator)
         assert isinstance(evaluated_operator, Closure)
-        evaluated_operands = list(map(partial(evaluate, environment), expression.operands))
+        evaluated_operands = list(map(partial(evaluate, environment), exp.operands))
         return apply(evaluated_operator, evaluated_operands)
     else:
-        raise RuntimeError(f"Unknown expression type: {expression}")
+        raise RuntimeError(f"Unknown expression type to evaluate: {exp}")
 
 
 def interpret(ast: Dict[str, Expression]) -> None:
