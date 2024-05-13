@@ -20,4 +20,4 @@ jobs:
       - name: Test
         run: |
           find compiler -iname "*.py" | grep -v -e "__init__.py" | xargs -L 1 mypy --strict
-          python3 -m unittest compiler/tests.py
+          python3 -m unittest compiler/test_interpretation.py
