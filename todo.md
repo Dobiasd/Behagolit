@@ -1,7 +1,6 @@
 # todo
 
 - partial application
-- support empty structs, and use for EmptyList in tests
 - type checks
 - unions with non-plain options
 - support uniqefix notation
