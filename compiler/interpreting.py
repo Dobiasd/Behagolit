@@ -1,3 +1,4 @@
+import copy
 from functools import partial
 from typing import Dict, List
 
@@ -15,18 +16,33 @@ def raise_type_error(expected: str, given: str) -> None:
     raise RuntimeError(f"Incorrect type. {given} given. {expected} wanted.")
 
 
-def extend_env(environment: Dict[str, Expression],
-               parameters: List[Parameter],
-               args: List[Expression]) -> Dict[str, Expression]:
+def bind_arguments_to_parameters(parameters: List[Parameter],
+                                 args: List[Expression]) -> Dict[str, Expression]:
     parameter_names = list(map(lambda p: p.name, parameters))
-    return environment | dict(zip(parameter_names, args))
+    return dict(zip(parameter_names, args))
+
+
+def extend_env(base_environment: Dict[str, Expression],
+               ext_environment: Dict[str, Expression]) -> Dict[str, Expression]:
+    return base_environment | ext_environment
+
+
+def remove_parameters(parameters: List[Parameter], names: List[str]) -> List[Parameter]:
+    return list(filter(lambda p: p.name not in names, parameters))
 
 
 def apply(closure: Closure, arguments: List[Expression]) -> Expression:
+    if len(arguments) > len(closure.parameters):
+        raise RuntimeError("Too many arguments.")
+    if len(arguments) < len(closure.parameters):
+        bindings = bind_arguments_to_parameters(closure.parameters, arguments)
+        new_closure = copy.deepcopy(closure)
+        new_closure.parameters = remove_parameters(new_closure.parameters, list(bindings.keys()))
+        return new_closure
     if isinstance(closure, PrimitiveClosure):
         return closure.impl(*list(map(partial(evaluate, closure.environment), arguments)))
     if isinstance(closure, CompoundClosure):
-        extended_env = extend_env(closure.environment, closure.parameters, arguments)
+        extended_env = extend_env(closure.environment, bind_arguments_to_parameters(closure.parameters, arguments))
         return evaluate(extended_env, closure.body)
     else:
         raise RuntimeError(f"Unknown closure type to apply: {closure}")
