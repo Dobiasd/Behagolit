@@ -12,11 +12,11 @@ class TestBehagolit(unittest.TestCase):
 
     def test_augment(self) -> None:
         augmented = augment("foo\nbar")
-        self.assertEqual(augmented, "foo;bar;")
+        self.assertEqual("foo;bar;", augmented)
 
     def test_lex(self) -> None:
         tokens = lex(augment("main:None = printLine message"))
-        self.assertEqual(tokens, [
+        self.assertEqual([
             Name(value='main'),
             Colon(),
             Name(value='None'),
@@ -24,68 +24,63 @@ class TestBehagolit(unittest.TestCase):
             Name(value='printLine'),
             Name(value='message'),
             Semicolon(),
-        ])
+        ], tokens)
 
     def test_parse_plain_type(self) -> None:
-        self.assertEqual(parse_type(lex(augment("None"))), (TypeSignaturePrimitive(name='None'), 1))
+        self.assertEqual((TypeSignaturePrimitive(name='None'), 1), parse_type(lex(augment("None"))))
 
     def test_parse_function_type(self) -> None:
-        self.assertEqual(parse_type(lex(augment("(Integer, Boolean -> String)"))), (
-            TypeSignatureFunction(params=[TypeSignaturePrimitive(name='Integer'),
-                                          TypeSignaturePrimitive(name='Boolean')],
-                                  return_type=TypeSignaturePrimitive(name='String')), 7))
+        self.assertEqual((TypeSignatureFunction(params=[TypeSignaturePrimitive(name='Integer'),
+                                                        TypeSignaturePrimitive(name='Boolean')],
+                                                return_type=TypeSignaturePrimitive(name='String')), 7),
+                         parse_type(lex(augment("(Integer, Boolean -> String)"))))
 
     def test_parse_higher_order_function_type(self) -> None:
-        self.assertEqual(parse_type(lex(augment("(String, (String -> Boolean) -> Integer))"))),
-                         (TypeSignatureFunction(params=[TypeSignaturePrimitive(name='String'),
+        self.assertEqual((TypeSignatureFunction(params=[TypeSignaturePrimitive(name='String'),
                                                         TypeSignatureFunction(
                                                             params=[TypeSignaturePrimitive(name='String')],
                                                             return_type=TypeSignaturePrimitive(name='Boolean'))],
-                                                return_type=TypeSignaturePrimitive(name='Integer')), 11))
+                                                return_type=TypeSignaturePrimitive(name='Integer')), 11),
+                         parse_type(lex(augment("(String, (String -> Boolean) -> Integer))"))))
 
     def test_parse_plain_expression(self) -> None:
-        self.assertEqual(parse_expression(lex(augment("plus 1 2"))),
-                         (Call(
-                             Variable("plus"), [
-                                 PrimitiveExpression(1),
-                                 PrimitiveExpression(2)]),
-                          3))
+        self.assertEqual(
+            (Call(Variable("plus"), [PrimitiveExpression(1), PrimitiveExpression(2)]), 3),
+            parse_expression(lex(augment("plus 1 2"))))
 
     def test_parse_parenthesised_expression(self) -> None:
-        self.assertEqual(parse_expression(lex(augment("plus (minus 3 2) (multiply 4 5)"))),
-                         (Call(
-                             Variable("plus"), [
-                                 Call(Variable("minus"), [PrimitiveExpression(3), PrimitiveExpression(2)]),
-                                 Call(Variable("multiply"), [PrimitiveExpression(4), PrimitiveExpression(5)])]),
-                          11))
+        self.assertEqual(
+            (Call(
+                Variable("plus"), [
+                    Call(Variable("minus"), [PrimitiveExpression(3), PrimitiveExpression(2)]),
+                    Call(Variable("multiply"), [PrimitiveExpression(4), PrimitiveExpression(5)])]),
+             11),
+            parse_expression(lex(augment("plus (minus 3 2) (multiply 4 5)"))))
 
     def test_evaluate_simple_expression(self) -> None:
         exp, _ = parse_expression(lex(augment("plus 1 2")))
-        self.assertEqual(evaluate(default_environment(), exp), PrimitiveExpression(3))
+        self.assertEqual(PrimitiveExpression(3), evaluate(default_environment(), exp))
 
     def test_evaluate_nested_expression(self) -> None:
         exp, _ = parse_expression(lex(augment("intToStr (plus (plus 1 1) (plus 1 (plus 1 1)))")))
-        self.assertEqual(evaluate(default_environment(), exp),
-                         PrimitiveExpression("5"))
+        self.assertEqual(PrimitiveExpression("5"), evaluate(default_environment(), exp))
 
     def test_parse_definition(self) -> None:
         ast, _, _ = parse(lex(augment("a:Integer = 1")))
-        self.assertEqual(
-            ast,
-            {'a': PrimitiveExpression(1)})
+        self.assertEqual({'a': PrimitiveExpression(1)}, ast)
 
     def test_with_definitions(self) -> None:
         exp, _ = parse_expression(lex(augment("plus a (identity b)")))
         code_ast, _, _ = parse(lex(augment("a:Integer = 1\nb:Integer=c\nc:Integer=2\nidentity:Integer x:Integer=x")))
         ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PrimitiveExpression(3))
+        self.assertEqual(PrimitiveExpression(3), evaluate(ast, exp))
 
     def test_variable(self) -> None:
         source = "fourteen:Integer = plus 10 4"
         exp, _ = parse_expression(lex(augment("intToStr fourteen")))
         code_ast, _, _ = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PrimitiveExpression("14"))
+        self.assertEqual(PrimitiveExpression("14"), evaluate(ast, exp))
 
     def test_higher_order_functions(self) -> None:
         source = """
@@ -95,19 +90,19 @@ square:Integer x:Integer = multiply x x
         exp, _ = parse_expression(lex(augment("apply square 3")))
         code_ast, _, _ = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PrimitiveExpression(9))
+        self.assertEqual(PrimitiveExpression(9), evaluate(ast, exp))
 
     @unittest.skip("partial application not yet implemented")
     def test_partial_application(self) -> None:
         exp, _ = parse_expression(lex(augment("(plus 40) 2")))
-        self.assertEqual(evaluate(default_environment(), exp), PrimitiveExpression(42))
+        self.assertEqual(PrimitiveExpression(42), evaluate(default_environment(), exp))
 
     def test_struct(self) -> None:
         source = "Foo := struct x:Integer y:Boolean"
         exp, _ = parse_expression(lex(augment("Foo.y (Foo 42 true)")))
         code_ast, structs, _ = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PrimitiveExpression(True))
+        self.assertEqual(PrimitiveExpression(True), evaluate(ast, exp))
 
     @unittest.skip("type checks yet implemented")
     def test_union(self) -> None:
@@ -115,7 +110,7 @@ square:Integer x:Integer = multiply x x
         exp, _ = parse_expression(lex(augment("equal f 42")))
         code_ast, structs, _ = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PrimitiveExpression(True))
+        self.assertEqual(PrimitiveExpression(True), evaluate(ast, exp))
 
     def test_more_complex_higher_order_functions(self) -> None:
         source = """
@@ -142,4 +137,4 @@ square:Integer x:Integer = multiply x x"""
         exp, _ = parse_expression(lex(augment("message")))
         code_ast, structs, _ = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PrimitiveExpression("Hello, world!\nThe answer is: 42"))
+        self.assertEqual(PrimitiveExpression("Hello, world!\nThe answer is: 42"), evaluate(ast, exp))

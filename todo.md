@@ -1,14 +1,12 @@
 # todo
 
-- partial application
-- type checks
+- type checks before interpretation
 - unions with non-plain options
+- partial application
 - support uniqefix notation
 - support list literals
 - adjust Ubiquefix.md to current syntax
-- union type check
 - scopes, nested definitions
-- switch assert sides
 - type aliases?
 - automatic toString for every custom type?
 - show code example in readme
