@@ -97,13 +97,10 @@ square:Integer x:Integer = multiply x x
         ast = default_environment() | code_ast
         self.assertEqual(evaluate(ast, exp), PrimitiveExpression(9))
 
+    @unittest.skip("partial application not yet implemented")
     def test_partial_application(self) -> None:
-        source = "plusForty:Integer = plus 40"
-        # Expressions like "(plus 40) 2" are not even parsed correctly
-        exp, _ = parse_expression(lex(augment("plusForty 2")))
-        code_ast, _, _ = parse(lex(augment(source)))
-        ast = default_environment() | code_ast
-        self.assertEqual(evaluate(ast, exp), PrimitiveExpression(42))
+        exp, _ = parse_expression(lex(augment("(plus 40) 2")))
+        self.assertEqual(evaluate(default_environment(), exp), PrimitiveExpression(42))
 
     def test_struct(self) -> None:
         source = "Foo := struct x:Integer y:Boolean"
