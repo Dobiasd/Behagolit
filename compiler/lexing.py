@@ -63,6 +63,11 @@ class ScopeClose(Token):
 
 
 @dataclass
+class VerticalBar(Token):
+    pass
+
+
+@dataclass
 class Semicolon(Token):
     pass
 
@@ -139,7 +144,11 @@ def lex(augmented_source_orig: str) -> List[Token]:
             tokens.append(ScopeClose())
             progress()
             continue
-        if current() in ["+", "*", "/", "%", "<", ">", "|"]:  # todo split , and | into different token types
+        if current() == "|":
+            tokens.append(VerticalBar())
+            progress()
+            continue
+        if current() in ["+", "*", "/", "%", "<", ">"]:
             tokens.append(Name(current()))
             progress()
             continue

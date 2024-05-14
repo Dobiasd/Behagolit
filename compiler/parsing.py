@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple
 from .expressions import Expression, PrimitiveExpression, Variable, Call, TypeSignaturePrimitive, TypeSignature, Struct, \
     SumType, TypeSignatureFunction, CompoundFunction, PrimitiveFunction, StructField, Constant
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
-    RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant
+    RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant, VerticalBar
 
 
 def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
@@ -137,7 +137,7 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, SumType, int]:
     idx = 0
     curr = tokens[idx]
     assert isinstance(curr, Name)
-    union_namme = curr.value
+    union_name = curr.value
     idx += 1
     assert tokens[idx] == ColonEqual()
     idx += 1
@@ -145,11 +145,14 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, SumType, int]:
     idx += 1
     options: List[TypeSignature] = []
     while idx < len(tokens) and not isinstance(tokens[idx], Semicolon):
+        if len(options) > 0:
+            assert isinstance(tokens[idx], VerticalBar)
+            idx += 1
         option = tokens[idx]
         assert isinstance(option, Name)
         idx += 1
         options.append(TypeSignaturePrimitive(option.value))
-    return union_namme, SumType(options), idx
+    return union_name, SumType(options), idx
 
 
 def parse(tokens: List[Token]) \
