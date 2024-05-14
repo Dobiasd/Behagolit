@@ -72,11 +72,12 @@
     - hackerrank stuff
     - tic tac toe (terminal+keyboard and ui+mouse)
     - tetris
-    - todo-list ui
+    - task-list ui
     - text editor
     - drawing application
     - database
-    - scheme compiler
+    - calculator
+    - scheme interpreter
     - webserver
     - ml library
     - chat client
