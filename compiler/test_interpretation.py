@@ -2,10 +2,10 @@ import unittest
 
 from .augmenting import augment
 from .built_ins import default_environment
-from .expressions import Call, PrimitiveExpression, Variable
+from .expressions import Call, PrimitiveExpression, Variable, TypeSignaturePrimitive, TypeSignatureFunction, Constant
 from .interpreting import evaluate
 from .lexing import Name, Colon, Assignment, Semicolon, lex
-from .parsing import parse_type, TypeSignaturePrimitive, TypeSignatureFunction, parse_expression, parse
+from .parsing import parse_type, parse_expression, parse
 
 
 class TestBehagolit(unittest.TestCase):
@@ -67,7 +67,8 @@ class TestBehagolit(unittest.TestCase):
 
     def test_parse_definition(self) -> None:
         ast, _, _ = parse(lex(augment("a:Integer = 1")))
-        self.assertEqual({'a': PrimitiveExpression(1)}, ast)
+        self.assertEqual({'a': Constant(expression=PrimitiveExpression(value=1),
+                                        type_sig=TypeSignaturePrimitive(name='Integer'))}, ast)
 
     def test_with_definitions(self) -> None:
         exp, _ = parse_expression(lex(augment("plus a (identity b)")))

@@ -1,6 +1,7 @@
 from typing import Dict
 
-from compiler.expressions import PrimitiveExpression, Expression, Parameter, PrimitiveClosure
+from compiler.expressions import PrimitiveExpression, Expression, PrimitiveFunction, \
+    TypeSignatureFunction, TypeSignaturePrimitive
 
 
 def get_const_int(exp: PrimitiveExpression) -> int:
@@ -69,15 +70,48 @@ def equal(a: PrimitiveExpression, b: PrimitiveExpression) -> PrimitiveExpression
 
 def default_environment() -> Dict[str, Expression]:
     return {
-        "printLine": PrimitiveClosure([Parameter("message")], {}, printline),
-        "concat": PrimitiveClosure([Parameter("a"), Parameter("b")], {}, concat),
-        "intToStr": PrimitiveClosure([Parameter("number")], {}, inttostr),
-        "plus": PrimitiveClosure([Parameter("a"), Parameter("b")], {}, plus),
-        "minus": PrimitiveClosure([Parameter("a"), Parameter("b")], {}, minus),
-        "multiply": PrimitiveClosure([Parameter("a"), Parameter("b")], {}, multiply),
-        "divide": PrimitiveClosure([Parameter("numerator"), Parameter("denominator")], {}, divide),
-        "modulo": PrimitiveClosure([Parameter("numerator"), Parameter("denominator")], {}, modulo),
-        "less": PrimitiveClosure([Parameter("a"), Parameter("b")], {}, less),
-        "greater": PrimitiveClosure([Parameter("a"), Parameter("b")], {}, greater),
-        "equal": PrimitiveClosure([Parameter("a"), Parameter("b")], {}, equal),
+        "printLine": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("String")],
+                                  TypeSignaturePrimitive("String")),
+            ["message"], printline),
+        "concat": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("String"), TypeSignaturePrimitive("String")],
+                                  TypeSignaturePrimitive("String")),
+            ["a", "b"], concat),
+        "intToStr": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("String")),
+            ["number"], inttostr),
+        "plus": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("Integer")),
+            ["a", "b"], plus),
+        "minus": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("Integer")),
+            ["a", "b"], minus),
+        "multiply": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("Integer")),
+            ["a", "b"], multiply),
+        "divide": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("Integer")),
+            ["numerator", "denominator"], divide),
+        "modulo": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("Integer")),
+            ["numerator", "denominator"], modulo),
+        "less": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("Integer")),
+            ["a", "b"], less),
+        "greater": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("Integer")),
+            ["a", "b"], greater),
+        "equal": PrimitiveFunction(
+            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
+                                  TypeSignaturePrimitive("Integer")),
+            ["a", "b"], equal),
     }

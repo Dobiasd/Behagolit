@@ -2,8 +2,8 @@ from functools import partial
 from typing import Dict, List
 
 from .built_ins import default_environment
-from .expressions import PrimitiveClosure, Closure, Function, Expression, Call, PrimitiveExpression, Variable, \
-    Parameter, CompoundClosure
+from .expressions import PrimitiveClosure, Closure, Expression, Call, PrimitiveExpression, Variable, \
+    CompoundClosure, CompoundFunction, PrimitiveFunction, Constant
 
 
 def fqn(scope: List[str], name: str) -> str:
@@ -16,10 +16,9 @@ def raise_type_error(expected: str, given: str) -> None:
 
 
 def extend_env(environment: Dict[str, Expression],
-               parameters: List[Parameter],
+               parameters: List[str],
                args: List[Expression]) -> Dict[str, Expression]:
-    parameter_names = list(map(lambda p: p.name, parameters))
-    return environment | dict(zip(parameter_names, args))
+    return environment | dict(zip(parameters, args))
 
 
 def apply(closure: Closure, arguments: List[Expression]) -> Expression:
@@ -37,8 +36,12 @@ def evaluate(environment: Dict[str, Expression], exp: Expression) -> Expression:
         return exp
     if isinstance(exp, Variable):
         return evaluate(environment, environment[exp.name])
-    if isinstance(exp, Function):
+    if isinstance(exp, Constant):
+        return evaluate(environment, exp.expression)
+    if isinstance(exp, CompoundFunction):
         return CompoundClosure(exp.parameters, environment, exp.body)
+    if isinstance(exp, PrimitiveFunction):
+        return PrimitiveClosure(exp.parameters, environment, exp.impl)
     if isinstance(exp, Call):
         if isinstance(exp.operator, Variable) and exp.operator.name == "ifElse":
             cond = evaluate(environment, exp.operands[0])

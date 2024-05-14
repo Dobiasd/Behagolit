@@ -6,8 +6,35 @@ from typing import List, Sequence, Dict, Union, Callable
 
 
 @dataclass
-class Parameter:
+class TypeSignature(ABC):
+    pass
+
+
+@dataclass
+class TypeSignaturePrimitive(TypeSignature):
     name: str
+
+
+@dataclass
+class TypeSignatureFunction(TypeSignature):
+    params: List[TypeSignature]
+    return_type: TypeSignature
+
+
+@dataclass
+class StructField(TypeSignature):
+    name: str
+    type_sig: TypeSignature
+
+
+@dataclass
+class Struct(TypeSignature):
+    fields: List[StructField]
+
+
+@dataclass
+class SumType(TypeSignature):
+    options: List[TypeSignature]
 
 
 @dataclass
@@ -18,6 +45,12 @@ class Expression(ABC):
 @dataclass
 class PrimitiveExpression(Expression):
     value: Union[None, str, bool, float, dict[str, PrimitiveExpression]]
+
+
+@dataclass
+class Constant(Expression):
+    expression: Expression
+    type_sig: TypeSignature
 
 
 @dataclass
@@ -33,13 +66,23 @@ class Call(Expression):
 
 @dataclass
 class Function(Expression):
-    parameters: List[Parameter]
+    type_sig: TypeSignatureFunction
+    parameters: List[str]
+
+
+@dataclass
+class CompoundFunction(Function):
     body: Expression
 
 
 @dataclass
+class PrimitiveFunction(Function):
+    impl: Callable[..., PrimitiveExpression]
+
+
+@dataclass
 class Closure(Expression):
-    parameters: List[Parameter]
+    parameters: List[str]
     environment: Dict[str, Expression]
 
 

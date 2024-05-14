@@ -1,48 +1,12 @@
 from __future__ import annotations
 
-from abc import ABC
-from dataclasses import dataclass
 from functools import partial
 from typing import List, Dict, Tuple
-from typing import TypeVar, Generic, Any
 
-from .expressions import Expression, PrimitiveExpression, Variable, Parameter, Call, Function, PrimitiveClosure
+from .expressions import Expression, PrimitiveExpression, Variable, Call, TypeSignaturePrimitive, TypeSignature, Struct, \
+    SumType, TypeSignatureFunction, CompoundFunction, PrimitiveFunction, StructField, Constant
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant
-
-T = TypeVar('T')
-
-
-# https://stackoverflow.com/a/66941316/1866775
-class MyTypeChecker(Generic[T]):
-    def is_right_type(self, x: Any) -> bool:
-        return isinstance(x, self.__orig_class__.__args__[0])  # type: ignore
-
-
-@dataclass
-class TypeSignature(ABC):
-    pass
-
-
-@dataclass
-class TypeSignaturePrimitive(TypeSignature):
-    name: str
-
-
-@dataclass
-class TypeSignatureFunction(TypeSignature):
-    params: List[TypeSignature]
-    return_type: TypeSignature
-
-
-@dataclass
-class Struct(TypeSignature):
-    fields: List[str]  # no type attached yet
-
-
-@dataclass
-class Union(TypeSignature):
-    options: List[TypeSignature]
 
 
 def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
@@ -134,18 +98,21 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Expression, int]:
     def_name, def_type, progress = parse_typed_name(tokens[idx:])
     idx += progress
     params = []
+    param_types = []
     while not isinstance(tokens[idx], Assignment):
         param_name, param_type, progress = parse_typed_name(tokens[idx:])
-        params.append(Parameter(param_name))
+        params.append(param_name)
+        param_types.append(param_type)
         idx += progress
     assert isinstance(tokens[idx], Assignment)
     idx += 1
     expression, progress = parse_expression(tokens[idx:])
     idx += progress
+
     if len(params) == 0:
-        return def_name, expression, idx
+        return def_name, Constant(expression, def_type), idx
     else:
-        return def_name, Function(params, expression), idx
+        return def_name, CompoundFunction(TypeSignatureFunction(param_types, def_type), params, expression), idx
 
 
 def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
@@ -158,15 +125,15 @@ def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
     idx += 1
     assert tokens[idx] == Name("struct")
     idx += 1
-    fields: List[str] = []
+    fields: List[StructField] = []
     while idx < len(tokens) and not isinstance(tokens[idx], Semicolon):
         field_name, field_type, progress = parse_typed_name(tokens[idx:])
         idx += progress
-        fields.append(field_name)
+        fields.append(StructField(field_name, field_type))
     return struct_name, Struct(fields), idx
 
 
-def parse_union_definition(tokens: List[Token]) -> Tuple[str, Union, int]:
+def parse_union_definition(tokens: List[Token]) -> Tuple[str, SumType, int]:
     idx = 0
     curr = tokens[idx]
     assert isinstance(curr, Name)
@@ -182,14 +149,14 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, Union, int]:
         assert isinstance(option, Name)
         idx += 1
         options.append(TypeSignaturePrimitive(option.value))
-    return union_namme, Union(options), idx
+    return union_namme, SumType(options), idx
 
 
 def parse(tokens: List[Token]) \
-        -> Tuple[Dict[str, Expression], Dict[str, Struct], Dict[str, Union]]:
+        -> Tuple[Dict[str, Expression], Dict[str, Struct], Dict[str, SumType]]:
     definitions: Dict[str, Expression] = {}
     structs: Dict[str, Struct] = {}
-    unions: Dict[str, Union] = {}
+    unions: Dict[str, SumType] = {}
 
     idx = 0
     while isinstance(tokens[idx], Semicolon):
@@ -214,10 +181,16 @@ def parse(tokens: List[Token]) \
         while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
             idx += 1
     for name, struct in structs.items():
-        definitions[name] = PrimitiveClosure(list(map(lambda f: Parameter(f), struct.fields)), {},
-                                             partial(create_struct, struct.fields))
+        field_names = list(map(lambda f: f.name, struct.fields))
+        field_types = list(map(lambda f: f.type_sig, struct.fields))
+        definitions[name] = PrimitiveFunction(
+            TypeSignatureFunction(field_types, TypeSignaturePrimitive(name)),
+            field_names, partial(create_struct, field_names))
         for field in struct.fields:
-            definitions[name + "." + field] = PrimitiveClosure([Parameter("s")], {}, partial(get_struct_field, field))
+            definitions[name + "." + field.name] = PrimitiveFunction(
+                TypeSignatureFunction([TypeSignaturePrimitive(name)], field.type_sig),
+                ["the_struct"],
+                partial(get_struct_field, field.name))
     return definitions, structs, unions
 
 
