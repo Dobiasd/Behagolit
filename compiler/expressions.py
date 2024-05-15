@@ -20,20 +20,17 @@ class Constant(Definition):
     type_sig: TypeSignature
 
 
-# todo: mark as abstract if possible
 @dataclass
-class Function(Definition):
+class CompoundFunction(Definition):
     type_sig: TypeSignatureFunction
     parameters: List[str]
-
-
-@dataclass
-class CompoundFunction(Function):
     body: Expression
 
 
 @dataclass
-class PrimitiveFunction(Function):
+class PrimitiveFunction(Definition):
+    type_sig: TypeSignatureFunction
+    parameters: List[str]
     impl: Callable[..., PrimitiveExpression]
 
 

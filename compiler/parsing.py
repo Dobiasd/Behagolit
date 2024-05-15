@@ -82,8 +82,6 @@ def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> 
 def parse_typed_name(tokens: List[Token]) -> Tuple[str, TypeSignature, int]:
     idx = 0
     curr = tokens[idx]
-    if not isinstance(curr, Name):
-        pass
     assert isinstance(curr, Name)
     def_name = curr.value
     idx += 1

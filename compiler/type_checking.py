@@ -1,7 +1,6 @@
 from typing import Dict
 
-from .expressions import Call, Variable, PrimitiveExpression, Function, CompoundFunction, Constant, \
-    Definition
+from .expressions import Call, Variable, PrimitiveExpression, CompoundFunction, Constant, Definition, PrimitiveFunction
 from .type_signatures import TypeSignatureFunction, TypeSignaturePrimitive
 
 
@@ -25,8 +24,8 @@ def check_types(ast: Dict[str, Definition]) -> None:
                 assert isinstance(item.expression.operator, Variable)
                 if item.expression.operator.name != "ifElse":
                     op = ast[item.expression.operator.name]
-                    assert isinstance(op, Function)
-        if isinstance(item, Function):
+                    assert isinstance(op, (PrimitiveFunction, CompoundFunction))
+        if isinstance(item, (PrimitiveFunction, CompoundFunction)):
             if not isinstance(item.type_sig, TypeSignatureFunction):
                 raise RuntimeError("Invalid type signature for function")
             if len(item.type_sig.params) != len(item.parameters):
@@ -36,7 +35,7 @@ def check_types(ast: Dict[str, Definition]) -> None:
                     if isinstance(item.body.operator, Variable):
                         if item.body.operator.name in ast:
                             op = ast[item.body.operator.name]
-                            assert isinstance(op, Function)
+                            assert isinstance(op, (PrimitiveFunction, CompoundFunction))
                             if len(op.type_sig.params) != len(item.body.operands):
                                 raise RuntimeError("Inconsistent number of arguments")
                             for x, y in zip(op.type_sig.params, item.body.operands):
@@ -49,7 +48,7 @@ def check_types(ast: Dict[str, Definition]) -> None:
                                             break
                                     if not checked:
                                         y2 = ast[y.name]
-                                        if isinstance(y2, Function):
+                                        if isinstance(y2, (PrimitiveFunction, CompoundFunction)):
                                             assert x == y2.type_sig
                                         else:
                                             raise RuntimeError("Check not yet implemented")
