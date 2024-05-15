@@ -56,16 +56,14 @@ class Variable(Expression):
 
 
 @dataclass
-class Closure(Expression):
+class CompoundClosure(Expression):
     parameters: List[str]
     environment: Dict[str, Expression]
-
-
-@dataclass
-class CompoundClosure(Closure):
     body: Expression
 
 
 @dataclass
-class PrimitiveClosure(Closure):
+class PrimitiveClosure(Expression):
+    parameters: List[str]
+    environment: Dict[str, Expression]
     impl: Callable[..., PrimitiveExpression]

@@ -2,7 +2,7 @@ from functools import partial
 from typing import Dict, List
 
 from .built_ins import default_environment
-from .expressions import PrimitiveClosure, Closure, Expression, Call, PrimitiveExpression, Variable, CompoundClosure, \
+from .expressions import PrimitiveClosure, Expression, Call, PrimitiveExpression, Variable, CompoundClosure, \
     CompoundFunction, PrimitiveFunction, Constant, Definition
 
 
@@ -21,7 +21,7 @@ def extend_env(environment: Dict[str, Expression],
     return environment | dict(zip(parameters, args))
 
 
-def apply(closure: Closure, arguments: List[Expression]) -> Expression:
+def apply(closure: Expression, arguments: List[Expression]) -> Expression:
     if isinstance(closure, PrimitiveClosure):
         return closure.impl(*list(map(partial(evaluate, closure.environment), arguments)))
     if isinstance(closure, CompoundClosure):
@@ -52,7 +52,6 @@ def evaluate(environment: Dict[str, Expression], exp: Expression) -> Expression:
             assert len(exp.operands) == 3 and isinstance(cond, PrimitiveExpression) and isinstance(cond.value, bool)
             return evaluate(environment, exp.operands[1]) if cond.value else evaluate(environment, exp.operands[2])
         evaluated_operator = evaluate(environment, exp.operator)
-        assert isinstance(evaluated_operator, Closure)
         evaluated_operands = list(map(partial(evaluate, environment), exp.operands))
         return apply(evaluated_operator, evaluated_operands)
     else:
