@@ -1,40 +1,40 @@
 from __future__ import annotations
+from __future__ import annotations
 
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Sequence, Dict, Union, Callable
+from typing import List, Callable
+from typing import Sequence, Dict, Union
+
+from .type_signatures import TypeSignature, TypeSignatureFunction
 
 
 @dataclass
-class TypeSignature(ABC):
+class Definition(ABC):
     pass
 
 
 @dataclass
-class TypeSignaturePrimitive(TypeSignature):
-    name: str
-
-
-@dataclass
-class TypeSignatureFunction(TypeSignature):
-    params: List[TypeSignature]
-    return_type: TypeSignature
-
-
-@dataclass
-class StructField(TypeSignature):
-    name: str
+class Constant(Definition):
+    expression: Expression
     type_sig: TypeSignature
 
 
+# todo: mark as abstract if possible
 @dataclass
-class Struct(TypeSignature):
-    fields: List[StructField]
+class Function(Definition):
+    type_sig: TypeSignatureFunction
+    parameters: List[str]
 
 
 @dataclass
-class SumType(TypeSignature):
-    options: List[TypeSignature]
+class CompoundFunction(Function):
+    body: Expression
+
+
+@dataclass
+class PrimitiveFunction(Function):
+    impl: Callable[..., PrimitiveExpression]
 
 
 @dataclass
@@ -48,36 +48,14 @@ class PrimitiveExpression(Expression):
 
 
 @dataclass
-class Constant(Expression):
-    expression: Expression
-    type_sig: TypeSignature
-
-
-@dataclass
-class Variable(Expression):
-    name: str
-
-
-@dataclass
 class Call(Expression):
     operator: Expression
     operands: Sequence[Expression]
 
 
 @dataclass
-class Function(Expression):
-    type_sig: TypeSignatureFunction
-    parameters: List[str]
-
-
-@dataclass
-class CompoundFunction(Function):
-    body: Expression
-
-
-@dataclass
-class PrimitiveFunction(Function):
-    impl: Callable[..., PrimitiveExpression]
+class Variable(Expression):
+    name: str
 
 
 @dataclass

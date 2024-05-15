@@ -3,10 +3,11 @@ from __future__ import annotations
 from functools import partial
 from typing import List, Dict, Tuple
 
-from .expressions import Expression, PrimitiveExpression, Variable, Call, TypeSignaturePrimitive, TypeSignature, Struct, \
-    SumType, TypeSignatureFunction, CompoundFunction, PrimitiveFunction, StructField, Constant
+from .expressions import Expression, PrimitiveExpression, Variable, Call, CompoundFunction, PrimitiveFunction, Constant, \
+    Definition
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant, VerticalBar
+from .type_signatures import TypeSignaturePrimitive, TypeSignature, Struct, SumType, TypeSignatureFunction, StructField
 
 
 def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
@@ -93,7 +94,7 @@ def parse_typed_name(tokens: List[Token]) -> Tuple[str, TypeSignature, int]:
     return def_name, def_type, idx
 
 
-def parse_definition(tokens: List[Token]) -> Tuple[str, Expression, int]:
+def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
     idx = 0
     def_name, def_type, progress = parse_typed_name(tokens[idx:])
     idx += progress
@@ -156,8 +157,8 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, SumType, int]:
 
 
 def parse(tokens: List[Token]) \
-        -> Tuple[Dict[str, Expression], Dict[str, Struct], Dict[str, SumType]]:
-    definitions: Dict[str, Expression] = {}
+        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, SumType]]:
+    definitions: Dict[str, Definition] = {}
     structs: Dict[str, Struct] = {}
     unions: Dict[str, SumType] = {}
 

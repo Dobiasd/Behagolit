@@ -1,7 +1,7 @@
 from typing import Dict
 
-from compiler.expressions import PrimitiveExpression, Expression, PrimitiveFunction, \
-    TypeSignatureFunction, TypeSignaturePrimitive
+from .expressions import PrimitiveExpression, PrimitiveFunction, Definition
+from .type_signatures import TypeSignatureFunction, TypeSignaturePrimitive
 
 
 def get_const_int(exp: PrimitiveExpression) -> int:
@@ -68,7 +68,7 @@ def equal(a: PrimitiveExpression, b: PrimitiveExpression) -> PrimitiveExpression
     return PrimitiveExpression(a.value == b.value)
 
 
-def default_environment() -> Dict[str, Expression]:
+def default_environment() -> Dict[str, Definition]:
     return {
         "printLine": PrimitiveFunction(
             TypeSignatureFunction([TypeSignaturePrimitive("String")],

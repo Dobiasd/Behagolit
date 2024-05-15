@@ -1,6 +1,7 @@
 # todo
 
-- type checks before interpretation
+- add tests to trigger type errors, refactor type check
+- use enum in TypeSignaturePrimitive
 - unions with non-plain options
 - partial application
 - support uniqefix notation

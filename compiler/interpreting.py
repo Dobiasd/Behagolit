@@ -2,8 +2,8 @@ from functools import partial
 from typing import Dict, List
 
 from .built_ins import default_environment
-from .expressions import PrimitiveClosure, Closure, Expression, Call, PrimitiveExpression, Variable, \
-    CompoundClosure, CompoundFunction, PrimitiveFunction, Constant
+from .expressions import PrimitiveClosure, Closure, Expression, Call, PrimitiveExpression, Variable, CompoundClosure, \
+    CompoundFunction, PrimitiveFunction, Constant, Definition
 
 
 def fqn(scope: List[str], name: str) -> str:
@@ -32,8 +32,12 @@ def apply(closure: Closure, arguments: List[Expression]) -> Expression:
 
 
 def evaluate(environment: Dict[str, Expression], exp: Expression) -> Expression:
-    if isinstance(exp, PrimitiveExpression) or isinstance(exp, Closure):
+    if isinstance(exp, PrimitiveExpression):
         return exp
+    if isinstance(exp, PrimitiveClosure):
+        return PrimitiveClosure(exp.parameters, environment | exp.environment, exp.impl)
+    if isinstance(exp, CompoundClosure):
+        return CompoundClosure(exp.parameters, environment | exp.environment, exp.body)
     if isinstance(exp, Variable):
         return evaluate(environment, environment[exp.name])
     if isinstance(exp, Constant):
@@ -55,6 +59,22 @@ def evaluate(environment: Dict[str, Expression], exp: Expression) -> Expression:
         raise RuntimeError(f"Unknown expression type to evaluate: {exp}")
 
 
-def interpret(ast: Dict[str, Expression]) -> None:
+def strip_definition_type(d: Definition) -> Expression:
+    if isinstance(d, Constant):
+        return d.expression
+    if isinstance(d, CompoundFunction):
+        return CompoundClosure(d.parameters, {}, d.body)
+    if isinstance(d, PrimitiveFunction):
+        return PrimitiveClosure(d.parameters, {}, d.impl)
+    assert False
+
+
+def definitions_to_expressions(ast: Dict[str, Definition]) -> Dict[str, Expression]:
+    return dict(zip(ast, map(strip_definition_type, ast.values())))
+
+
+def interpret(ast: Dict[str, Definition]) -> None:
     main = ast["main"]
-    evaluate(default_environment(), main)
+    assert isinstance(main, Constant)
+
+    evaluate(definitions_to_expressions(default_environment()), main.expression)
