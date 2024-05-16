@@ -6,11 +6,6 @@ from .expressions import PrimitiveClosure, Expression, Call, PrimitiveExpression
     CompoundFunction, PrimitiveFunction, Constant, Definition
 
 
-def fqn(scope: List[str], name: str) -> str:
-    scope_fqn = ".".join(scope)
-    return (scope_fqn + "." if len(scope_fqn) != 0 else "") + name
-
-
 def raise_type_error(expected: str, given: str) -> None:
     raise RuntimeError(f"Incorrect type. {given} given. {expected} wanted.")
 
