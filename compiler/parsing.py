@@ -155,8 +155,7 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, SumType, int]:
     return union_name, SumType(options), idx
 
 
-def parse(tokens: List[Token]) \
-        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Set[str]]]:
+def parse(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Set[str]]]:
     definitions: Dict[str, Definition] = {}
     structs: Dict[str, Struct] = {}
     unions: Dict[str, SumType] = {}
@@ -199,7 +198,7 @@ def parse(tokens: List[Token]) \
         for option in union.options:
             assert isinstance(option, TypeSignaturePrimitive)
             type_aliases[name].add(option.name)
-    return definitions, structs, type_aliases
+    return definitions, type_aliases
 
 
 def get_struct_field(field_name: str, struct: PrimitiveExpression) -> PrimitiveExpression:

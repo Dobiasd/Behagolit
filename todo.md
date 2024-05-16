@@ -1,7 +1,6 @@
 # todo
 
 - add tests to trigger type errors, refactor type check
-- does parser need to return structs?
 - use enum in TypeSignaturePrimitive
 - unions with non-plain options
 - partial application

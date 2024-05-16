@@ -68,13 +68,13 @@ class TestBehagolit(unittest.TestCase):
         self.assertEqual(PrimitiveExpression("5"), evaluate(definitions_to_expressions(default_environment()), exp))
 
     def test_parse_definition(self) -> None:
-        ast, _, _ = parse(lex(augment("a:Integer = 1")))
+        ast, _ = parse(lex(augment("a:Integer = 1")))
         self.assertEqual({'a': Constant(expression=PrimitiveExpression(value=1),
                                         type_sig=TypeSignaturePrimitive(name='Integer'))}, ast)
 
     def test_with_definitions(self) -> None:
         exp, _ = parse_expression(lex(augment("plus a (identity b)")))
-        code_ast, _, type_aliases = parse(
+        code_ast, type_aliases = parse(
             lex(augment("a:Integer = 1\nb:Integer=c\nc:Integer=2\nidentity:Integer x:Integer=x")))
         ast = default_environment() | code_ast
         check_types(ast, type_aliases)
@@ -84,7 +84,7 @@ class TestBehagolit(unittest.TestCase):
     def test_variable(self) -> None:
         source = "fourteen:Integer = plus 10 4"
         exp, _ = parse_expression(lex(augment("intToStr fourteen")))
-        code_ast, _, type_aliases = parse(lex(augment(source)))
+        code_ast, type_aliases = parse(lex(augment(source)))
         ast = default_environment() | code_ast
         check_types(ast, type_aliases)
         env = definitions_to_expressions(ast)
@@ -96,7 +96,7 @@ apply:Integer f:(Integer->Integer) v:Integer = f v
 square:Integer x:Integer = multiply x x
 """
         exp, _ = parse_expression(lex(augment("apply square 3")))
-        code_ast, _, type_aliases = parse(lex(augment(source)))
+        code_ast, type_aliases = parse(lex(augment(source)))
         ast = default_environment() | code_ast
         check_types(ast, type_aliases)
         env = definitions_to_expressions(ast)
@@ -111,7 +111,7 @@ square:Integer x:Integer = multiply x x
     def test_struct(self) -> None:
         source = "Foo := struct x:Integer y:Boolean"
         exp, _ = parse_expression(lex(augment("Foo.y (Foo 42 true)")))
-        code_ast, _, type_aliases = parse(lex(augment(source)))
+        code_ast, type_aliases = parse(lex(augment(source)))
         ast = default_environment() | code_ast
         check_types(ast, type_aliases)
         env = definitions_to_expressions(ast)
@@ -120,7 +120,7 @@ square:Integer x:Integer = multiply x x
     def test_union(self) -> None:
         source = "Foo := union Boolean | Integer\nf:Foo = 42"
         exp, _ = parse_expression(lex(augment("equal f 42")))
-        code_ast, _, type_aliases = parse(lex(augment(source)))
+        code_ast, type_aliases = parse(lex(augment(source)))
         ast = default_environment() | code_ast
         check_types(ast, type_aliases)
         env = definitions_to_expressions(ast)
@@ -150,7 +150,7 @@ map:IntList xs:IntList f:(Integer -> Integer) = ifElse (equal xs none) none (Int
 foldr:Integer f:(Integer, Integer -> Integer) acc:Integer xs:IntList = ifElse (equal xs none) acc (f (IntListElem.head xs) (foldr f acc (IntListElem.tail xs)))
 square:Integer x:Integer = multiply x x"""
         exp, _ = parse_expression(lex(augment("message")))
-        code_ast, _, type_aliases = parse(lex(augment(source)))
+        code_ast, type_aliases = parse(lex(augment(source)))
         ast = default_environment() | code_ast
         check_types(ast, type_aliases)
         env = definitions_to_expressions(ast)
@@ -158,16 +158,16 @@ square:Integer x:Integer = multiply x x"""
 
     def test_type_error_wrong_definition_type(self) -> None:
         source = "foo:Integer = \"hi\""
-        ast, _, _ = parse(lex(augment(source)))
+        ast, _ = parse(lex(augment(source)))
         self.assertRaises(TypeError, check_types, ast)
 
     def test_type_error_wrong_literal_argument_type(self) -> None:
         source = "foo:Integer = plus 1 true"
-        code_ast, _, _ = parse(lex(augment(source)))
+        code_ast, _ = parse(lex(augment(source)))
         ast = default_environment() | code_ast
         self.assertRaises(TypeError, check_types, ast)
 
     def test_type_error_wrong_definition_argument_type(self) -> None:
         source = "foo:Integer = add 1 bar\nbar:Boolean = true\nadd:Integer x:Integer y:Integer = plus x y"
-        ast, _, type_aliases = parse(lex(augment(source)))
+        ast, type_aliases = parse(lex(augment(source)))
         self.assertRaises(TypeError, check_types, ast, type_aliases)
