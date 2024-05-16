@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 from functools import partial
 from typing import List, Dict, Tuple, Set
 
@@ -8,7 +9,23 @@ from .expressions import Expression, PrimitiveExpression, Variable, Call, Compou
     Definition
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant, VerticalBar
-from .type_signatures import TypeSignaturePrimitive, TypeSignature, Struct, SumType, TypeSignatureFunction, StructField
+from .type_signatures import TypeSignaturePrimitive, TypeSignature, TypeSignatureFunction
+
+
+@dataclass
+class StructField(TypeSignature):
+    name: str
+    type_sig: TypeSignature
+
+
+@dataclass
+class Struct(TypeSignature):
+    fields: List[StructField]
+
+
+@dataclass
+class SumType(TypeSignature):
+    options: List[TypeSignature]
 
 
 def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
