@@ -82,33 +82,31 @@ def check_types(ast: Dict[str, Definition], type_aliases: Dict[str, Set[str]]) -
             if isinstance(item.expression, Call):
                 check_call(ast, type_aliases, item.expression)
         if isinstance(item, (PrimitiveFunction, CompoundFunction)):
-            if not isinstance(item.type_sig, TypeSignatureFunction):
-                raise RuntimeError("Invalid type signature for function")
-            if len(item.type_sig.params) != len(item.parameters):
-                raise RuntimeError("Inconsistent number of parameters")
+            # todo: does the below actually do something?
+            type_assert(isinstance(item.type_sig, TypeSignatureFunction), "Invalid type signature for function")
+            type_assert(len(item.type_sig.params) == len(item.parameters), "Inconsistent number of parameters")
             if isinstance(item, CompoundFunction):
                 if isinstance(item.body, Call):
                     if isinstance(item.body.operator, Variable):
                         if item.body.operator.name in ast:
                             op = ast[item.body.operator.name]
                             assert isinstance(op, (PrimitiveFunction, CompoundFunction))
-                            if len(op.type_sig.params) != len(item.body.operands):
-                                raise RuntimeError("Inconsistent number of arguments")
+                            type_assert(len(op.type_sig.params) == len(item.body.operands),
+                                        "Inconsistent number of arguments")
                             for x, y in zip(op.type_sig.params, item.body.operands):
                                 if isinstance(y, Variable):
                                     checked = False
                                     for idx, p in enumerate(item.parameters):
                                         if p == y.name:
-                                            assert x == item.type_sig.params[idx]
+                                            type_assert(x == item.type_sig.params[idx], "todo message")
                                             checked = True
                                             break
                                     if not checked:
                                         y2 = ast[y.name]
                                         if isinstance(y2, (PrimitiveFunction, CompoundFunction)):
-                                            assert x == y2.type_sig
+                                            type_assert(x == y2.type_sig, "todo message")
                                         else:
-                                            raise RuntimeError("Check not yet implemented")
+                                            type_assert(False, "Check not yet implemented")
                                 elif isinstance(y, PrimitiveExpression):
                                     # todo: attach sig to PrimitiveExpression instead or parse them as Constant?
-                                    if derive_type(y) != x:
-                                        raise RuntimeError("Invalid type")
+                                    type_assert(derive_type(y) == x, "Invalid type")
