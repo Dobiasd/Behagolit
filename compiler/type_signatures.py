@@ -10,7 +10,7 @@ class TypeSignature(ABC):
     pass
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class TypeSignaturePrimitive(TypeSignature):
     name: str
 

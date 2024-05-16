@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from functools import partial
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 
 from .expressions import Expression, PrimitiveExpression, Variable, Call, CompoundFunction, PrimitiveFunction, Constant, \
     Definition
@@ -155,7 +156,7 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, SumType, int]:
 
 
 def parse(tokens: List[Token]) \
-        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, SumType]]:
+        -> Tuple[Dict[str, Definition], Dict[str, Struct], Dict[str, Set[str]]]:
     definitions: Dict[str, Definition] = {}
     structs: Dict[str, Struct] = {}
     unions: Dict[str, SumType] = {}
@@ -193,7 +194,12 @@ def parse(tokens: List[Token]) \
                 TypeSignatureFunction([TypeSignaturePrimitive(name)], field.type_sig),
                 ["the_struct"],
                 partial(get_struct_field, field.name))
-    return definitions, structs, unions
+    type_aliases: Dict[str, Set[str]] = defaultdict(set)
+    for name, union in unions.items():
+        for option in union.options:
+            assert isinstance(option, TypeSignaturePrimitive)
+            type_aliases[name].add(option.name)
+    return definitions, structs, type_aliases
 
 
 def get_struct_field(field_name: str, struct: PrimitiveExpression) -> PrimitiveExpression:
