@@ -1,7 +1,7 @@
 from typing import Dict
 
 from .expressions import PrimitiveExpression, PrimitiveFunction, Definition
-from .type_signatures import TypeSignatureFunction, TypeSignaturePrimitive
+from .type_signatures import TypeSignatureFunction, TypeSignaturePrimitive, BuiltInPrimitiveType
 
 
 def get_const_int(exp: PrimitiveExpression) -> int:
@@ -71,47 +71,56 @@ def equal(a: PrimitiveExpression, b: PrimitiveExpression) -> PrimitiveExpression
 def default_environment() -> Dict[str, Definition]:
     return {
         "printLine": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("String")],
-                                  TypeSignaturePrimitive("String")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)),
             ["message"], printline),
         "concat": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("String"), TypeSignaturePrimitive("String")],
-                                  TypeSignaturePrimitive("String")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.STRING),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)),
             ["a", "b"], concat),
         "intToStr": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("String")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)),
             ["number"], inttostr),
         "plus": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("Integer")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], plus),
         "minus": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("Integer")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], minus),
         "multiply": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("Integer")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], multiply),
         "divide": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("Integer")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["numerator", "denominator"], divide),
         "modulo": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("Integer")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["numerator", "denominator"], modulo),
         "less": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("Integer")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], less),
         "greater": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("Integer")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], greater),
         "equal": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive("Integer"), TypeSignaturePrimitive("Integer")],
-                                  TypeSignaturePrimitive("Integer")),
+            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
+                                  TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], equal),
     }

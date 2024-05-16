@@ -7,7 +7,7 @@ from .interpreting import evaluate, definitions_to_expressions
 from .lexing import Name, Colon, Assignment, Semicolon, lex
 from .parsing import parse_type, parse_expression, parse
 from .type_checking import check_types, TypeCheckException
-from .type_signatures import TypeSignaturePrimitive, TypeSignatureFunction
+from .type_signatures import TypeSignaturePrimitive, TypeSignatureFunction, BuiltInPrimitiveType
 
 
 class TestBehagolit(unittest.TestCase):
@@ -29,20 +29,22 @@ class TestBehagolit(unittest.TestCase):
         ], tokens)
 
     def test_parse_plain_type(self) -> None:
-        self.assertEqual((TypeSignaturePrimitive(name='None'), 1), parse_type(lex(augment("None"))))
+        self.assertEqual((TypeSignaturePrimitive(BuiltInPrimitiveType.NONE), 1), parse_type(lex(augment("None"))))
 
     def test_parse_function_type(self) -> None:
-        self.assertEqual((TypeSignatureFunction(params=[TypeSignaturePrimitive(name='Integer'),
-                                                        TypeSignaturePrimitive(name='Boolean')],
-                                                return_type=TypeSignaturePrimitive(name='String')), 7),
+        self.assertEqual((TypeSignatureFunction(params=[TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                                        TypeSignaturePrimitive(BuiltInPrimitiveType.BOOLEAN)],
+                                                return_type=TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)), 7),
                          parse_type(lex(augment("(Integer, Boolean -> String)"))))
 
     def test_parse_higher_order_function_type(self) -> None:
-        self.assertEqual((TypeSignatureFunction(params=[TypeSignaturePrimitive(name='String'),
+        self.assertEqual((TypeSignatureFunction(params=[TypeSignaturePrimitive(BuiltInPrimitiveType.STRING),
                                                         TypeSignatureFunction(
-                                                            params=[TypeSignaturePrimitive(name='String')],
-                                                            return_type=TypeSignaturePrimitive(name='Boolean'))],
-                                                return_type=TypeSignaturePrimitive(name='Integer')), 11),
+                                                            params=[
+                                                                TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)],
+                                                            return_type=TypeSignaturePrimitive(
+                                                                BuiltInPrimitiveType.BOOLEAN))],
+                                                return_type=TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)), 11),
                          parse_type(lex(augment("(String, (String -> Boolean) -> Integer))"))))
 
     def test_parse_plain_expression(self) -> None:
@@ -70,7 +72,7 @@ class TestBehagolit(unittest.TestCase):
     def test_parse_definition(self) -> None:
         ast, _ = parse(lex(augment("a:Integer = 1")))
         self.assertEqual({'a': Constant(expression=PrimitiveExpression(value=1),
-                                        type_sig=TypeSignaturePrimitive(name='Integer'))}, ast)
+                                        type_sig=TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER))}, ast)
 
     def test_with_definitions(self) -> None:
         exp, _ = parse_expression(lex(augment("plus a (identity b)")))

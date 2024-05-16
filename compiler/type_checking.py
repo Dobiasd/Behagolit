@@ -3,7 +3,8 @@ from typing import Dict, Set, List
 
 from .expressions import Call, Variable, PrimitiveExpression, CompoundFunction, Constant, Definition, PrimitiveFunction, \
     Expression
-from .type_signatures import TypeSignatureFunction, TypeSignaturePrimitive, TypeSignature
+from .type_signatures import TypeSignatureFunction, TypeSignaturePrimitive, TypeSignature, BuiltInPrimitiveType, \
+    CustomPrimitiveType
 
 
 class TypeCheckException(Exception):
@@ -15,8 +16,10 @@ def type_assert(condition: bool, error_msg: str) -> None:
         raise TypeCheckException(error_msg)
 
 
-def assert_types_are_the_same(type_aliases: Dict[str, Set[str]], a: TypeSignature, b: TypeSignature,
-                              error_msg: str) -> None:
+def assert_types_are_the_same(
+        type_aliases: Dict[BuiltInPrimitiveType | CustomPrimitiveType, Set[BuiltInPrimitiveType | CustomPrimitiveType]],
+        a: TypeSignature, b: TypeSignature,
+        error_msg: str) -> None:
     if isinstance(a, TypeSignaturePrimitive) and isinstance(b, TypeSignaturePrimitive):
         a_plain = type_aliases.get(a.name, {a})
         b_plain = type_aliases.get(b.name, {b})
@@ -40,15 +43,16 @@ def assert_types_are_the_same(type_aliases: Dict[str, Set[str]], a: TypeSignatur
 
 def derive_type(exp: PrimitiveExpression) -> TypeSignaturePrimitive:
     if isinstance(exp.value, bool):
-        return TypeSignaturePrimitive("Boolean")
+        return TypeSignaturePrimitive(BuiltInPrimitiveType.BOOLEAN)
     if isinstance(exp.value, int):
-        return TypeSignaturePrimitive("Integer")
+        return TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)
     if isinstance(exp.value, str):
-        return TypeSignaturePrimitive("String")
+        return TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)
     assert False
 
 
-def check_call(ast: Dict[str, Definition], type_aliases: Dict[str, Set[str]], call: Call) -> None:
+def check_call(ast: Dict[str, Definition], type_aliases: Dict[
+    BuiltInPrimitiveType | CustomPrimitiveType, Set[BuiltInPrimitiveType | CustomPrimitiveType]], call: Call) -> None:
     assert isinstance(call.operator, Variable)
     if call.operator.name != "ifElse":
         op = ast[call.operator.name]
@@ -63,7 +67,7 @@ def check_call(ast: Dict[str, Definition], type_aliases: Dict[str, Set[str]], ca
 def get_type(ast: Dict[str, Definition], expression: Expression) -> TypeSignature:
     if isinstance(expression, Call):
         if isinstance(expression.operator, Variable) and expression.operator.name == "ifElse":
-            assert get_type(ast, expression.operands[0]) == TypeSignaturePrimitive("Boolean")
+            assert get_type(ast, expression.operands[0]) == TypeSignaturePrimitive(BuiltInPrimitiveType.BOOLEAN)
             assert get_type(ast, expression.operands[1]) == get_type(ast, expression.operands[2])
             return get_type(ast, expression.operands[1])
         if isinstance(expression.operator, (CompoundFunction, PrimitiveFunction)):
@@ -91,7 +95,8 @@ def extend_ast(ast: Dict[str, Definition],
                           zip(parameters, args)))
 
 
-def check_types(ast: Dict[str, Definition], type_aliases: Dict[str, Set[str]]) -> None:
+def check_types(ast: Dict[str, Definition], type_aliases: Dict[
+    BuiltInPrimitiveType | CustomPrimitiveType, Set[BuiltInPrimitiveType | CustomPrimitiveType]]) -> None:
     for item in ast.values():
         if isinstance(item, Constant):
             if isinstance(item.expression, PrimitiveExpression):

@@ -9,7 +9,8 @@ from .expressions import Expression, PrimitiveExpression, Variable, Call, Compou
     Definition
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
     RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant, VerticalBar
-from .type_signatures import TypeSignaturePrimitive, TypeSignature, TypeSignatureFunction
+from .type_signatures import TypeSignaturePrimitive, TypeSignature, TypeSignatureFunction, BuiltInPrimitiveType, \
+    CustomPrimitiveType
 
 
 @dataclass(frozen=True)
@@ -28,12 +29,21 @@ class SumType(TypeSignature):
     options: List[TypeSignature]
 
 
+def is_primitive_type_name(name: str) -> bool:
+    return name in ["Integer", "String", "Boolean", "None"]
+
+
+def primitive_type_signature_from_name(name: str) -> TypeSignaturePrimitive:
+    return TypeSignaturePrimitive(
+        BuiltInPrimitiveType[name.upper()] if is_primitive_type_name(name) else CustomPrimitiveType(name))
+
+
 def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
     idx = 0
     curr = tokens[idx]
     idx += 1
     if isinstance(curr, Name):
-        return TypeSignaturePrimitive(curr.value), idx
+        return primitive_type_signature_from_name(curr.value), idx
     if isinstance(curr, LeftParenthesis):
         param_types = []
         new_type, progress = parse_type(tokens[idx:])
@@ -168,11 +178,12 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, SumType, int]:
         option = tokens[idx]
         assert isinstance(option, Name)
         idx += 1
-        options.append(TypeSignaturePrimitive(option.value))
+        options.append(primitive_type_signature_from_name(option.value))
     return union_name, SumType(options), idx
 
 
-def parse(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Set[str]]]:
+def parse(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[
+    BuiltInPrimitiveType | CustomPrimitiveType, Set[BuiltInPrimitiveType | CustomPrimitiveType]]]:
     definitions: Dict[str, Definition] = {}
     structs: Dict[str, Struct] = {}
     unions: Dict[str, SumType] = {}
@@ -203,18 +214,19 @@ def parse(tokens: List[Token]) -> Tuple[Dict[str, Definition], Dict[str, Set[str
         field_names = list(map(lambda f: f.name, struct.fields))
         field_types = list(map(lambda f: f.type_sig, struct.fields))
         definitions[name] = PrimitiveFunction(
-            TypeSignatureFunction(field_types, TypeSignaturePrimitive(name)),
+            TypeSignatureFunction(field_types, primitive_type_signature_from_name(name)),
             field_names, partial(create_struct, field_names))
         for field in struct.fields:
             definitions[name + "." + field.name] = PrimitiveFunction(
-                TypeSignatureFunction([TypeSignaturePrimitive(name)], field.type_sig),
+                TypeSignatureFunction([primitive_type_signature_from_name(name)], field.type_sig),
                 ["the_struct"],
                 partial(get_struct_field, field.name))
-    type_aliases: Dict[str, Set[str]] = defaultdict(set)
+    type_aliases: Dict[
+        BuiltInPrimitiveType | CustomPrimitiveType, Set[BuiltInPrimitiveType | CustomPrimitiveType]] = defaultdict(set)
     for name, union in unions.items():
         for option in union.options:
             assert isinstance(option, TypeSignaturePrimitive)
-            type_aliases[name].add(option.name)
+            type_aliases[CustomPrimitiveType(name)].add(option.name)
     return definitions, type_aliases
 
 

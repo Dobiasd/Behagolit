@@ -1,7 +1,6 @@
 # todo
 
-- add tests to trigger type errors, refactor type check
-- use enum in TypeSignaturePrimitive
+- Simplify the BuiltInPrimitiveType | CustomPrimitiveType thing
 - unions with non-plain options
 - partial application
 - support uniqefix notation
