@@ -18,13 +18,13 @@ Behagolit
 - [Ubiquefix notation](Ubiquefix.md)
 - Expressions can only access other expressions defined after them. This encourages reading and writing code in a
   top-down approach. (Consequently, imports are found at the end of source files.)
-- Functions can have side effects. The list of possible side effects is part of the type of a function.
+- Functions can have side effects. The list of possible side effects is part of the type of the function.
 
 ## Etymology
 
 - "Behag" comes from the German [behaglich](https://en.wiktionary.org/wiki/behaglich), meaning comfortable, cosy.
 - "olit" is the second-person singular past indicative of the Finish [olla](https://en.wiktionary.org/wiki/olit), which
-  means "to be.
+  means "to be".
 
 So Behagolit could resemble something like "you were comfortable". (And maybe using Behagolit is the reason you now no
 longer are comfortable. ^_-)
