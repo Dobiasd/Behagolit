@@ -12,13 +12,11 @@ Behagolit
 
 ## Philosophy
 
-- Everything is an expression. (with no statements, everything is immutable)
-- Functions are values too.
-- Values are lazily evaluated, like a functions taking zero arguments.
 - [Ubiquefix notation](Ubiquefix.md)
-- Expressions can only access other expressions defined after them. This encourages reading and writing code in a
-  top-down approach. (Consequently, imports are found at the end of source files.)
-- Functions can have side effects. The list of possible side effects is part of the type of the function.
+- Functions are first-class values.
+- Expressions are evaluated lazily.
+- Everything is an expression. Definitions are immutable.
+- The potential side effects of a function are reflected in its type.
 
 ## Etymology
 
@@ -26,5 +24,4 @@ Behagolit
 - "olit" is the second-person singular past indicative of the Finish [olla](https://en.wiktionary.org/wiki/olit), which
   means "to be".
 
-So Behagolit could resemble something like "you were comfortable". (And maybe using Behagolit is the reason you now no
-longer are comfortable. ^_-)
+So Behagolit could resemble something like "you were comfortable". (And maybe using Behagolit is the reason you now are in a different condition. ^_-)
