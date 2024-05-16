@@ -1,6 +1,5 @@
 # todo
 
-- Simplify the BuiltInPrimitiveType | CustomPrimitiveType thing
 - unions with non-plain options
 - partial application
 - support uniqefix notation
