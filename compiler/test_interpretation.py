@@ -106,7 +106,7 @@ square:Integer x:Integer = multiply x x
         self.assertEqual(PrimitiveExpression(9), evaluate(env, exp))
 
     def test_scope(self) -> None:
-        source = "y:Integer = plusTwo 40\n    plusTwo:Integer x:Integer = plus x 2"
+        source = "y:Integer = plusTwo 40\n    plusTwo:Integer x:Integer = plus x two\n        two:Integer = 2"
         exp, _ = parse_expression(lex(augment("y")))
         user_definitions, type_aliases = parse(lex(augment(source)))
         definitions = default_environment() | user_definitions
@@ -144,15 +144,15 @@ square:Integer x:Integer = multiply x x
 main:None = printLine message
 message:String = concat "Hello, world!" (concat "\\n" answerSentence)
     answerSentence:String = tellFact "answer" theAnswer
+        tellFact:String name:String value:String = concat "The " (concat name (concat " is: " value))
     theAnswer:String = ifElse true fourtyTwoRepr "No."
-    tellFact:String name:String value:String = concat "The " (concat name (concat " is: " value))
-    fourtyTwoRepr:String = intToStr fourtyTwo
-    fourtyTwo:Integer = plus fourteen (plus 15 thirteen)
-    thirteen:Integer = divide (plus (modulo 29 19) (plus (fib 8) sixty)) 7
-    sixty:Integer = plus (multiply 10 (TwoDigitNumber.tens weirdSixty)) (TwoDigitNumber.ones weirdSixty)
-    weirdSixty:TwoDigitNumber = TwoDigitNumber 6 0
-    fourteen:Integer = sum (map oneTwoThree square)
-    oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 none))
+        fourtyTwoRepr:String = intToStr fourtyTwo
+            fourtyTwo:Integer = plus fourteen (plus 15 thirteen)
+                thirteen:Integer = divide (plus (modulo 29 19) (plus (fib 8) sixty)) 7
+                    sixty:Integer = plus (multiply 10 (TwoDigitNumber.tens weirdSixty)) (TwoDigitNumber.ones weirdSixty)
+                        weirdSixty:TwoDigitNumber = TwoDigitNumber 6 0
+                fourteen:Integer = sum (map oneTwoThree square)
+                    oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 none))
 fib:Integer n:Integer = ifElse (less n 2) n (plus (fib (minus n 1)) (fib (minus n 2)))
 TwoDigitNumber := struct tens:Integer ones:Integer
 IntListElem := struct head:Integer tail:IntList

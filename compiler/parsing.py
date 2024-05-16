@@ -136,10 +136,23 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
     expression, progress = parse_expression(tokens[idx:])
     idx += progress
 
+    sub_definitions: Dict[str, Definition] = {}
+    if idx < len(tokens) - 1 and isinstance(tokens[idx], Semicolon) and isinstance(tokens[idx + 1], ScopeOpen):
+        idx += 2
+        while not isinstance(tokens[idx], ScopeClose):
+            sub_def_name, sub_definition, progress = parse_definition(tokens[idx:])
+            sub_definitions[sub_def_name] = sub_definition
+            idx += progress
+            while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
+                idx += 1
+        assert isinstance(tokens[idx], ScopeClose)
+        idx += 1
+
     if len(params) == 0:
-        return def_name, Constant({}, expression, def_type), idx
+        return def_name, Constant(sub_definitions, expression, def_type), idx
     else:
-        return def_name, CompoundFunction({}, TypeSignatureFunction(param_types, def_type), params, expression), idx
+        return def_name, CompoundFunction(sub_definitions, TypeSignatureFunction(param_types, def_type), params,
+                                          expression), idx
 
 
 def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
@@ -216,18 +229,6 @@ def parse(tokens: List[Token]) -> Tuple[
             def_name, definition, progress = parse_definition(tokens[idx:])
             idx += progress
             definitions[def_name] = definition
-            if idx < len(tokens) - 1 and isinstance(tokens[idx], Semicolon) and isinstance(tokens[idx + 1], ScopeOpen):
-                idx += 2
-                sub_definitions: Dict[str, Definition] = {}
-                while not isinstance(tokens[idx], ScopeClose):
-                    sub_def_name, sub_definition, progress = parse_definition(tokens[idx:])
-                    sub_definitions[sub_def_name] = sub_definition
-                    idx += progress
-                    while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
-                        idx += 1
-                assert isinstance(tokens[idx], ScopeClose)
-                idx += 1
-                definitions[def_name] = with_sub_definitions(definitions[def_name], sub_definitions)
         while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
             idx += 1
     for name, struct in structs.items():
