@@ -1,11 +1,10 @@
 # todo
 
-- unions with non-plain options
 - partial application
 - support uniqefix notation
+- unions with non-plain options
 - support list literals
 - adjust Ubiquefix.md to current syntax
-- scopes, nested definitions
 - type aliases?
 - automatic toString for every custom type?
 - show code example in readme

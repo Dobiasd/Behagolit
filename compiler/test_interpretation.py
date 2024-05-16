@@ -72,7 +72,8 @@ class TestBehagolit(unittest.TestCase):
     def test_parse_definition(self) -> None:
         definitions, _ = parse(lex(augment("a:Integer = 1")))
         self.assertEqual({'a': Constant(expression=PrimitiveExpression(value=1),
-                                        type_sig=TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER))}, definitions)
+                                        type_sig=TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
+                                        sub_definitions={})}, definitions)
 
     def test_with_definitions(self) -> None:
         exp, _ = parse_expression(lex(augment("plus a (identity b)")))
@@ -104,6 +105,15 @@ square:Integer x:Integer = multiply x x
         env = definitions_to_expressions(definitions)
         self.assertEqual(PrimitiveExpression(9), evaluate(env, exp))
 
+    def test_scope(self) -> None:
+        source = "y:Integer = plusTwo 40\n    plusTwo:Integer x:Integer = plus x 2"
+        exp, _ = parse_expression(lex(augment("y")))
+        user_definitions, type_aliases = parse(lex(augment(source)))
+        definitions = default_environment() | user_definitions
+        check_types(definitions, type_aliases)
+        env = definitions_to_expressions(definitions)
+        self.assertEqual(PrimitiveExpression(42), evaluate(env, exp))
+
     @unittest.skip("partial application not yet implemented")
     def test_partial_application(self) -> None:
         exp, _ = parse_expression(lex(augment("(plus 40) 2")))
@@ -133,23 +143,23 @@ square:Integer x:Integer = multiply x x
         source = """
 main:None = printLine message
 message:String = concat "Hello, world!" (concat "\\n" answerSentence)
-answerSentence:String = tellFact "answer" theAnswer
-theAnswer:String = ifElse true fourtyTwoRepr "No."
-tellFact:String name:String value:String = concat "The " (concat name (concat " is: " value))
-fourtyTwoRepr:String = intToStr fourtyTwo
-fourtyTwo:Integer = plus fourteen (plus 15 thirteen)
-thirteen:Integer = divide (plus (modulo 29 19) (plus (fib 8) sixty)) 7
+    answerSentence:String = tellFact "answer" theAnswer
+    theAnswer:String = ifElse true fourtyTwoRepr "No."
+    tellFact:String name:String value:String = concat "The " (concat name (concat " is: " value))
+    fourtyTwoRepr:String = intToStr fourtyTwo
+    fourtyTwo:Integer = plus fourteen (plus 15 thirteen)
+    thirteen:Integer = divide (plus (modulo 29 19) (plus (fib 8) sixty)) 7
+    sixty:Integer = plus (multiply 10 (TwoDigitNumber.tens weirdSixty)) (TwoDigitNumber.ones weirdSixty)
+    weirdSixty:TwoDigitNumber = TwoDigitNumber 6 0
+    fourteen:Integer = sum (map oneTwoThree square)
+    oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 none))
 fib:Integer n:Integer = ifElse (less n 2) n (plus (fib (minus n 1)) (fib (minus n 2)))
-sixty:Integer = plus (multiply 10 (TwoDigitNumber.tens weirdSixty)) (TwoDigitNumber.ones weirdSixty)
 TwoDigitNumber := struct tens:Integer ones:Integer
-weirdSixty:TwoDigitNumber = TwoDigitNumber 6 0
-fourteen:Integer = sum (map oneTwoThree square)
-oneTwoThree:IntList = IntListElem 1 (IntListElem 2 (IntListElem 3 none))
 IntListElem := struct head:Integer tail:IntList
 IntList := union None | IntListElem
 sum:Integer xs:IntList = foldr plus 0 xs
-map:IntList xs:IntList f:(Integer -> Integer) = ifElse (equal xs none) none (IntListElem (f (IntListElem.head xs)) (map (IntListElem.tail xs) f))
 foldr:Integer f:(Integer, Integer -> Integer) acc:Integer xs:IntList = ifElse (equal xs none) acc (f (IntListElem.head xs) (foldr f acc (IntListElem.tail xs)))
+map:IntList xs:IntList f:(Integer -> Integer) = ifElse (equal xs none) none (IntListElem (f (IntListElem.head xs)) (map (IntListElem.tail xs) f))
 square:Integer x:Integer = multiply x x"""
         exp, _ = parse_expression(lex(augment("message")))
         user_definitions, type_aliases = parse(lex(augment(source)))
@@ -158,7 +168,7 @@ square:Integer x:Integer = multiply x x"""
         env = definitions_to_expressions(definitions)
         self.assertEqual(PrimitiveExpression("Hello, world!\nThe answer is: 42"), evaluate(env, exp))
 
-    def test_type_error_wrong_definition_type(self) -> None:
+    def test_type_error_wrong_definition_tfype(self) -> None:
         source = "foo:Integer = \"hi\""
         definitions, type_aliases = parse(lex(augment(source)))
         self.assertRaises(TypeCheckException, check_types, definitions, type_aliases)

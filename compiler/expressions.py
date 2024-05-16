@@ -11,7 +11,7 @@ from .type_signatures import TypeSignature, TypeSignatureFunction
 
 @dataclass(frozen=True)
 class Definition(ABC):
-    pass
+    sub_definitions: Dict[str, Definition]
 
 
 @dataclass(frozen=True)
@@ -53,6 +53,12 @@ class Call(Expression):
 @dataclass(frozen=True)
 class Variable(Expression):
     name: str
+
+
+@dataclass(frozen=True)
+class ConstantClosure(Expression):
+    environment: Dict[str, Expression]
+    body: Expression
 
 
 @dataclass(frozen=True)

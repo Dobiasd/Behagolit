@@ -71,54 +71,66 @@ def equal(a: PrimitiveExpression, b: PrimitiveExpression) -> PrimitiveExpression
 def default_environment() -> Dict[str, Definition]:
     return {
         "printLine": PrimitiveFunction(
-            TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)],
-                                  TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)),
+            {},
+            TypeSignatureFunction(
+                [TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)],
+                TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)),
             ["message"], printline),
         "concat": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.STRING),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)),
             ["a", "b"], concat),
         "intToStr": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.STRING)),
             ["number"], inttostr),
         "plus": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], plus),
         "minus": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], minus),
         "multiply": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], multiply),
         "divide": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["numerator", "denominator"], divide),
         "modulo": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["numerator", "denominator"], modulo),
         "less": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], less),
         "greater": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),
             ["a", "b"], greater),
         "equal": PrimitiveFunction(
+            {},
             TypeSignatureFunction([TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER),
                                    TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)],
                                   TypeSignaturePrimitive(BuiltInPrimitiveType.INTEGER)),

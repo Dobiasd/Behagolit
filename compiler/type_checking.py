@@ -88,22 +88,27 @@ def get_type(definitions: Dict[str, Definition], expression: Expression) -> Type
     assert False
 
 
+def attach_sub_definitions(definitions: Dict[str, Definition],
+                           sub_definitions: Dict[str, Definition]) -> Dict[str, Definition]:
+    return definitions | sub_definitions
+
+
 def extend_definitions(definitions: Dict[str, Definition],
                        parameters: List[str],
                        args: List[TypeSignature]) -> Dict[str, Definition]:
-    return definitions | dict(map(lambda name_and_sig: (name_and_sig[0], Constant(Expression(), name_and_sig[1])),
+    return definitions | dict(map(lambda name_and_sig: (name_and_sig[0], Constant({}, Expression(), name_and_sig[1])),
                                   zip(parameters, args)))
 
 
 def check_types(definitions: Dict[str, Definition],
                 type_aliases: Dict[TypeSignaturePrimitive, Set[TypeSignaturePrimitive]]) -> None:
-    for item in definitions.values():
+    for def_name, item in definitions.items():
         if isinstance(item, Constant):
             if isinstance(item.expression, PrimitiveExpression):
                 assert_types_are_the_same(type_aliases, derive_type(item.expression), item.type_sig,
                                           "Invalid constant type")
             if isinstance(item.expression, Call):
-                check_call(definitions, type_aliases, item.expression)
+                check_call(attach_sub_definitions(definitions, item.sub_definitions), type_aliases, item.expression)
         if isinstance(item, PrimitiveFunction):
             pass  # PrimitiveFunction is only instantiated from standard library. We have to trust it.
         if isinstance(item, CompoundFunction):
@@ -111,11 +116,15 @@ def check_types(definitions: Dict[str, Definition],
             type_assert(len(item.type_sig.params) == len(item.parameters), "Inconsistent number of parameters")
             if isinstance(item, CompoundFunction):
                 if isinstance(item.body, Call):
-                    check_call(extend_definitions(definitions, item.parameters, item.type_sig.params), type_aliases,
-                               item.body)
+                    check_call(
+                        extend_definitions(attach_sub_definitions(definitions, item.sub_definitions), item.parameters,
+                                           item.type_sig.params), type_aliases,
+                        item.body)
                 elif isinstance(item.body, Variable):
-                    type_assert(get_type(extend_definitions(definitions, item.parameters, item.type_sig.params),
-                                         item.body) == item.type_sig.return_type, "Invalid definition")
+                    type_assert(get_type(
+                        extend_definitions(attach_sub_definitions(definitions, item.sub_definitions), item.parameters,
+                                           item.type_sig.params),
+                        item.body) == item.type_sig.return_type, "Invalid definition")
                     pass
                 else:
                     assert False

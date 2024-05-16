@@ -8,7 +8,7 @@ from typing import List, Dict, Tuple, Set
 from .expressions import Expression, PrimitiveExpression, Variable, Call, CompoundFunction, PrimitiveFunction, Constant, \
     Definition
 from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Semicolon, BoolConstant, LeftParenthesis, \
-    RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant, VerticalBar
+    RightParenthesis, Colon, Arrow, Comma, ColonEqual, NoneConstant, VerticalBar, ScopeOpen, ScopeClose
 from .type_signatures import TypeSignaturePrimitive, TypeSignature, TypeSignatureFunction, BuiltInPrimitiveType, \
     CustomPrimitiveType
 
@@ -137,9 +137,9 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
     idx += progress
 
     if len(params) == 0:
-        return def_name, Constant(expression, def_type), idx
+        return def_name, Constant({}, expression, def_type), idx
     else:
-        return def_name, CompoundFunction(TypeSignatureFunction(param_types, def_type), params, expression), idx
+        return def_name, CompoundFunction({}, TypeSignatureFunction(param_types, def_type), params, expression), idx
 
 
 def parse_struct_definition(tokens: List[Token]) -> Tuple[str, Struct, int]:
@@ -182,6 +182,14 @@ def parse_union_definition(tokens: List[Token]) -> Tuple[str, SumType, int]:
     return union_name, SumType(options), idx
 
 
+def with_sub_definitions(definition: Definition, sub_definitions: Dict[str, Definition]) -> Definition:
+    if isinstance(definition, Constant):
+        return Constant(sub_definitions, definition.expression, definition.type_sig)
+    if isinstance(definition, CompoundFunction):
+        return CompoundFunction(sub_definitions, definition.type_sig, definition.parameters, definition.body)
+    assert False
+
+
 def parse(tokens: List[Token]) -> Tuple[
     Dict[str, Definition], Dict[TypeSignaturePrimitive, Set[TypeSignaturePrimitive]]]:
     definitions: Dict[str, Definition] = {}
@@ -208,17 +216,34 @@ def parse(tokens: List[Token]) -> Tuple[
             def_name, definition, progress = parse_definition(tokens[idx:])
             idx += progress
             definitions[def_name] = definition
+            if idx < len(tokens) - 1 and isinstance(tokens[idx], Semicolon) and isinstance(tokens[idx + 1], ScopeOpen):
+                idx += 2
+                sub_definitions: Dict[str, Definition] = {}
+                while not isinstance(tokens[idx], ScopeClose):
+                    sub_def_name, sub_definition, progress = parse_definition(tokens[idx:])
+                    sub_definitions[sub_def_name] = sub_definition
+                    idx += progress
+                    while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
+                        idx += 1
+                assert isinstance(tokens[idx], ScopeClose)
+                idx += 1
+                definitions[def_name] = with_sub_definitions(definitions[def_name], sub_definitions)
         while idx < len(tokens) and isinstance(tokens[idx], Semicolon):
             idx += 1
     for name, struct in structs.items():
         field_names = list(map(lambda f: f.name, struct.fields))
         field_types = list(map(lambda f: f.type_sig, struct.fields))
         definitions[name] = PrimitiveFunction(
-            TypeSignatureFunction(field_types, primitive_type_signature_from_name(name)),
+            {},
+            TypeSignatureFunction(field_types,
+                                  primitive_type_signature_from_name(name)),
             field_names, partial(create_struct, field_names))
         for field in struct.fields:
             definitions[name + "." + field.name] = PrimitiveFunction(
-                TypeSignatureFunction([primitive_type_signature_from_name(name)], field.type_sig),
+                {},
+                TypeSignatureFunction(
+                    [primitive_type_signature_from_name(name)],
+                    field.type_sig),
                 ["the_struct"],
                 partial(get_struct_field, field.name))
     type_aliases: Dict[TypeSignaturePrimitive, Set[TypeSignaturePrimitive]] = defaultdict(set)
