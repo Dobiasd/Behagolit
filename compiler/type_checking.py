@@ -110,11 +110,11 @@ def check_definition(definitions: Dict[str, Definition],
         if isinstance(item.expression, PrimitiveExpression):
             assert_types_are_the_same(type_aliases, derive_type(item.expression), item.type_sig,
                                       "Invalid constant type")
-        if isinstance(item.expression, Call):
+        elif isinstance(item.expression, Call):
             check_call(attach_sub_definitions(definitions, item.sub_definitions), type_aliases, item.expression)
     if isinstance(item, PrimitiveFunction):
         pass  # PrimitiveFunction is only instantiated from standard library. We have to trust it.
-    if isinstance(item, CompoundFunction):
+    elif isinstance(item, CompoundFunction):
         type_assert(isinstance(item.type_sig, TypeSignatureFunction), "Invalid type signature for function")
         type_assert(len(item.type_sig.params) == len(item.parameters), "Inconsistent number of parameters")
         if isinstance(item, CompoundFunction):
