@@ -50,6 +50,7 @@ def check_call(ast: Dict[str, Definition], type_aliases: Dict[str, Set[str]], ca
         op = ast[call.operator.name]
         assert isinstance(op, (PrimitiveFunction, CompoundFunction))
         arg_types = list(map(partial(get_type, ast), call.operands))
+        type_assert(len(arg_types) == len(op.type_sig.params), "Wrong number of arguments")
         for arg_type, param_type in zip(arg_types, op.type_sig.params):
             assert_types_are_the_same(type_aliases, arg_type, param_type, "todo message")
 

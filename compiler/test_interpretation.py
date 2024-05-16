@@ -158,16 +158,22 @@ square:Integer x:Integer = multiply x x"""
 
     def test_type_error_wrong_definition_type(self) -> None:
         source = "foo:Integer = \"hi\""
-        ast, _ = parse(lex(augment(source)))
-        self.assertRaises(TypeError, check_types, ast)
+        ast, type_aliases = parse(lex(augment(source)))
+        self.assertRaises(TypeError, check_types, ast, type_aliases)
 
     def test_type_error_wrong_literal_argument_type(self) -> None:
         source = "foo:Integer = plus 1 true"
-        code_ast, _ = parse(lex(augment(source)))
+        code_ast, type_aliases = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertRaises(TypeError, check_types, ast)
+        self.assertRaises(TypeError, check_types, ast, type_aliases)
 
     def test_type_error_wrong_definition_argument_type(self) -> None:
         source = "foo:Integer = add 1 bar\nbar:Boolean = true\nadd:Integer x:Integer y:Integer = plus x y"
         ast, type_aliases = parse(lex(augment(source)))
+        self.assertRaises(TypeError, check_types, ast, type_aliases)
+
+    def test_type_error_wrong_number_or_arguments(self) -> None:
+        source = "foo:Integer = plus 1"
+        code_ast, type_aliases = parse(lex(augment(source)))
+        ast = default_environment() | code_ast
         self.assertRaises(TypeError, check_types, ast, type_aliases)
