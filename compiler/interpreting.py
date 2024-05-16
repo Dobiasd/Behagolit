@@ -63,12 +63,12 @@ def strip_definition_type(d: Definition) -> Expression:
     assert False
 
 
-def definitions_to_expressions(ast: Dict[str, Definition]) -> Dict[str, Expression]:
-    return dict(zip(ast, map(strip_definition_type, ast.values())))
+def definitions_to_expressions(definitions: Dict[str, Definition]) -> Dict[str, Expression]:
+    return dict(zip(definitions, map(strip_definition_type, definitions.values())))
 
 
-def interpret(ast: Dict[str, Definition]) -> None:
-    main = ast["main"]
+def interpret(definitions: Dict[str, Definition]) -> None:
+    main = definitions["main"]
     assert isinstance(main, Constant)
 
     evaluate(definitions_to_expressions(default_environment()), main.expression)
