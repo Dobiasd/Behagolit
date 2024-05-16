@@ -3,22 +3,22 @@ from dataclasses import dataclass
 from typing import List
 
 
-@dataclass
+@dataclass(frozen=True)
 class Token(ABC):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Name(Token):
     value: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class LeftParenthesis(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Comma(Token):
     pass
 
@@ -27,62 +27,62 @@ class RightParenthesis(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class BoolConstant(Token):
     value: bool
 
 
-@dataclass
+@dataclass(frozen=True)
 class NoneConstant(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class StringConstant(Token):
     value: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class IntegerConstant(Token):
     value: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class Assignment(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class ScopeOpen(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class ScopeClose(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class VerticalBar(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Semicolon(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Colon(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Arrow(Token):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class ColonEqual(Token):
     pass
 

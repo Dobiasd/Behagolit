@@ -12,18 +12,18 @@ from .lexing import Token, Name, Assignment, StringConstant, IntegerConstant, Se
 from .type_signatures import TypeSignaturePrimitive, TypeSignature, TypeSignatureFunction
 
 
-@dataclass
+@dataclass(frozen=True)
 class StructField(TypeSignature):
     name: str
     type_sig: TypeSignature
 
 
-@dataclass
+@dataclass(frozen=True)
 class Struct(TypeSignature):
     fields: List[StructField]
 
 
-@dataclass
+@dataclass(frozen=True)
 class SumType(TypeSignature):
     options: List[TypeSignature]
 
