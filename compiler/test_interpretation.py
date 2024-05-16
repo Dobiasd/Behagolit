@@ -6,7 +6,7 @@ from .expressions import Call, PrimitiveExpression, Variable, Constant
 from .interpreting import evaluate, definitions_to_expressions
 from .lexing import Name, Colon, Assignment, Semicolon, lex
 from .parsing import parse_type, parse_expression, parse
-from .type_checking import check_types
+from .type_checking import check_types, TypeCheckException
 from .type_signatures import TypeSignaturePrimitive, TypeSignatureFunction
 
 
@@ -159,21 +159,27 @@ square:Integer x:Integer = multiply x x"""
     def test_type_error_wrong_definition_type(self) -> None:
         source = "foo:Integer = \"hi\""
         ast, type_aliases = parse(lex(augment(source)))
-        self.assertRaises(TypeError, check_types, ast, type_aliases)
+        self.assertRaises(TypeCheckException, check_types, ast, type_aliases)
 
     def test_type_error_wrong_literal_argument_type(self) -> None:
         source = "foo:Integer = plus 1 true"
         code_ast, type_aliases = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertRaises(TypeError, check_types, ast, type_aliases)
+        self.assertRaises(TypeCheckException, check_types, ast, type_aliases)
 
     def test_type_error_wrong_definition_argument_type(self) -> None:
         source = "foo:Integer = add 1 bar\nbar:Boolean = true\nadd:Integer x:Integer y:Integer = plus x y"
         ast, type_aliases = parse(lex(augment(source)))
-        self.assertRaises(TypeError, check_types, ast, type_aliases)
+        self.assertRaises(TypeCheckException, check_types, ast, type_aliases)
 
     def test_type_error_wrong_number_or_arguments(self) -> None:
         source = "foo:Integer = plus 1"
         code_ast, type_aliases = parse(lex(augment(source)))
         ast = default_environment() | code_ast
-        self.assertRaises(TypeError, check_types, ast, type_aliases)
+        self.assertRaises(TypeCheckException, check_types, ast, type_aliases)
+
+    def test_type_error_compound_function(self) -> None:
+        source = "foo:Integer x:String = plus 1 x"
+        code_ast, type_aliases = parse(lex(augment(source)))
+        ast = default_environment() | code_ast
+        self.assertRaises(TypeCheckException, check_types, ast, type_aliases)
