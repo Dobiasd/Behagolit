@@ -91,6 +91,7 @@
     - https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html
     - https://www.dabeaz.com/ply/ply.html
     - https://rainingcomputers.blog/dist/the_path_to_implementing_a_programming_language.md
+    - https://en.wikipedia.org/wiki/Bootstrapping_(compilers)
 
 ### sum of squares (text file, lines)
 
