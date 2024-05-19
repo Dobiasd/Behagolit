@@ -114,11 +114,33 @@ square:Integer x:Integer = multiply x x
         env = definitions_to_expressions(definitions)
         self.assertEqual(PrimitiveExpression(42), evaluate(env, exp))
 
-    @unittest.skip("partial application not yet implemented")
-    def test_partial_application(self) -> None:
-        exp, _ = parse_expression(lex(augment("(plus 40) 2")))
-        env = definitions_to_expressions(default_environment())
+    @unittest.skip("not yet implemented")
+    def test_partial_application_transformation(self) -> None:
+        source = "a:Integer = (plus 40) 2"
+        exp, _ = parse_expression(lex(augment("a")))
+        user_definitions, type_aliases = parse(lex(augment(source)))
+        definitions = default_environment() | user_definitions
+        check_types(definitions, type_aliases)
+        env = definitions_to_expressions(definitions)
         self.assertEqual(PrimitiveExpression(42), evaluate(env, exp))
+
+    @unittest.skip("not yet implemented")
+    def test_ubiquefix_chain_transformation(self) -> None:
+        source = """
+input: str
+split_lines: str -> List[str]
+map: List[a] -> (a -> b) -> List[b]
+strToInt: str -> int
+square: int -> int
+sum: List[int] -> int
+result:Integer = input split_lines map strToInt map square sum
+"""
+        exp, _ = parse_expression(lex(augment("result")))
+        user_definitions, type_aliases = parse(lex(augment(source)))
+        definitions = default_environment() | user_definitions
+        check_types(definitions, type_aliases)
+        env = definitions_to_expressions(definitions)
+        self.assertEqual(PrimitiveExpression(1234), evaluate(env, exp))
 
     def test_struct(self) -> None:
         source = "Foo := struct x:Integer y:Boolean"
