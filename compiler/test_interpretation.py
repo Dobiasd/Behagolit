@@ -115,6 +115,19 @@ square:Integer x:Integer = multiply x x
         self.assertEqual(PrimitiveExpression(42), evaluate(env, exp))
 
     @unittest.skip("not yet implemented")
+    def test_expression_starting_with_parentheses_and_returning_function(self) -> None:
+        source = """
+foo:addFixed x:Integer = helper
+    helper:Integer y:Integer = plus x y
+        """
+        exp, _ = parse_expression(lex(augment("(foo 40) 2")))
+        user_definitions, type_aliases = parse(lex(augment(source)))
+        definitions = default_environment() | user_definitions
+        check_types(definitions, type_aliases)
+        env = definitions_to_expressions(definitions)
+        self.assertEqual(PrimitiveExpression(42), evaluate(env, exp))
+
+    @unittest.skip("not yet implemented")
     def test_partial_application_transformation(self) -> None:
         source = "a:Integer = (plus 40) 2"
         exp, _ = parse_expression(lex(augment("a")))
