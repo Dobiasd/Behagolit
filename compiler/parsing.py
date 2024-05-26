@@ -140,6 +140,9 @@ def parse_definition(tokens: List[Token]) -> Tuple[str, Definition, int]:
     if idx < len(tokens) - 1 and isinstance(tokens[idx], Semicolon) and isinstance(tokens[idx + 1], ScopeOpen):
         idx += 2
         while not isinstance(tokens[idx], ScopeClose):
+            if isinstance(tokens[idx], Semicolon):
+                idx += 1
+                continue
             sub_def_name, sub_definition, progress = parse_definition(tokens[idx:])
             sub_definitions[sub_def_name] = sub_definition
             idx += progress
