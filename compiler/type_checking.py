@@ -105,7 +105,12 @@ def check_definition(definitions: Dict[str, Definition],
                      type_aliases: Dict[TypeSignaturePrimitive, Set[TypeSignaturePrimitive]]) -> None:
     if len(item.sub_definitions) > 0:
         for sub_def in item.sub_definitions.values():
-            check_definition(attach_sub_definitions(definitions, item.sub_definitions), sub_def, type_aliases)
+            if isinstance(item, CompoundFunction):
+                check_definition(
+                    extend_definitions(attach_sub_definitions(definitions, item.sub_definitions), item.parameters,
+                                       item.type_sig.params), sub_def, type_aliases)
+            else:
+                check_definition(attach_sub_definitions(definitions, item.sub_definitions), sub_def, type_aliases)
     if isinstance(item, Constant):
         if isinstance(item.expression, PrimitiveExpression):
             assert_types_are_the_same(type_aliases, derive_type(item.expression), item.type_sig,
