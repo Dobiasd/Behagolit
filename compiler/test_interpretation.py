@@ -117,7 +117,7 @@ square:Integer x:Integer = multiply x x
     @unittest.skip("not yet implemented")
     def test_expression_starting_with_parentheses_and_returning_function(self) -> None:
         source = """
-foo:addFixed x:Integer = helper
+foo:(Integer -> Integer) x:Integer = helper
     helper:Integer y:Integer = plus x y
         """
         exp, _ = parse_expression(lex(augment("(foo 40) 2")))
