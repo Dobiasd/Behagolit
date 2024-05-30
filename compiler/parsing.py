@@ -64,47 +64,44 @@ def parse_type(tokens: List[Token]) -> Tuple[TypeSignature, int]:
     assert False
 
 
-def parse_expression(tokens: List[Token], allow_eat_args_right: bool = True) -> Tuple[Expression, int]:
+def parse_expression(tokens: List[Token]) -> Tuple[Expression, int]:
     idx = 0
-    curr = tokens[idx]
-    if isinstance(curr, StringConstant):
-        idx += 1
-        return PrimitiveExpression(curr.value), idx
-    if isinstance(curr, IntegerConstant):
-        idx += 1
-        return PrimitiveExpression(curr.value), idx
-    if isinstance(curr, BoolConstant):
-        idx += 1
-        return PrimitiveExpression(curr.value), idx
-    if isinstance(curr, NoneConstant):
-        idx += 1
-        return PrimitiveExpression(None), idx
-    if isinstance(curr, LeftParenthesis):
-        idx += 1
-        exp, progress = parse_expression(tokens[idx:])
-        idx += progress
-        assert isinstance(tokens[idx], RightParenthesis)
-        idx += 1
-        return exp, idx
-    if isinstance(curr, Name):
-        assert isinstance(curr, Name)
-        func_name = curr.value
-        idx += 1
-        expressions: List[Expression] = [Variable(func_name)]
-        if not allow_eat_args_right:
-            return Variable(func_name), idx
-        while not isinstance(tokens[idx], Semicolon) and not isinstance(tokens[idx], RightParenthesis):
-            if isinstance(tokens[idx], LeftParenthesis):
-                exp, progress = parse_expression(tokens[idx:])
-            else:
-                exp, progress = parse_expression(tokens[idx:], allow_eat_args_right=False)
+    parts: List[Expression] = []
+    while not isinstance(tokens[idx], RightParenthesis) and not isinstance(tokens[idx], Semicolon):
+        curr = tokens[idx]
+        if isinstance(curr, StringConstant):
+            idx += 1
+            parts.append(PrimitiveExpression(curr.value))
+            continue
+        if isinstance(curr, IntegerConstant):
+            idx += 1
+            parts.append(PrimitiveExpression(curr.value))
+            continue
+        if isinstance(curr, BoolConstant):
+            idx += 1
+            parts.append(PrimitiveExpression(curr.value))
+            continue
+        if isinstance(curr, NoneConstant):
+            idx += 1
+            parts.append(PrimitiveExpression(None))
+            continue
+        if isinstance(curr, LeftParenthesis):
+            idx += 1
+            exp, progress = parse_expression(tokens[idx:])
             idx += progress
-            expressions.append(exp)
-        if len(expressions) == 1:
-            return Variable(func_name), idx
-        else:
-            return Call(expressions[0], expressions[1:]), idx
-    assert False
+            assert isinstance(tokens[idx], RightParenthesis)
+            idx += 1
+            parts.append(exp)
+            continue
+        if isinstance(curr, Name):
+            idx += 1
+            parts.append(Variable(curr.value))
+            continue
+        assert False
+    if len(parts) == 1:
+        return parts[0], idx
+    else:
+        return Call(parts[0], parts[1:]), idx
 
 
 def parse_typed_name(tokens: List[Token]) -> Tuple[str, TypeSignature, int]:

@@ -114,14 +114,18 @@ square:Integer x:Integer = multiply x x
         env = definitions_to_expressions(definitions)
         self.assertEqual(PrimitiveExpression(42), evaluate(env, exp))
 
-    @unittest.skip("not yet implemented")
+    def test_first_expression_with_parentheses(self) -> None:
+        exp, _ = parse_expression(lex(augment("(plus) 40 2")))
+        env = definitions_to_expressions(default_environment())
+        self.assertEqual(PrimitiveExpression(42), evaluate(env, exp))
+
     def test_expression_starting_with_parentheses_and_returning_function(self) -> None:
         source = """
 foo:(Integer -> Integer) x:Integer = helper
     helper:Integer y:Integer = plus x y
         """
-        exp, _ = parse_expression(lex(augment("(foo 40) 2")))
         user_definitions, type_aliases = parse(lex(augment(source)))
+        exp, _ = parse_expression(lex(augment("(foo 40) 2")))
         definitions = default_environment() | user_definitions
         check_types(definitions, type_aliases)
         env = definitions_to_expressions(definitions)
