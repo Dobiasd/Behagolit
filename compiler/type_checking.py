@@ -53,15 +53,20 @@ def derive_type(exp: PrimitiveExpression) -> TypeSignaturePrimitive:
 def check_call(definitions: Dict[str, Definition],
                type_aliases: Dict[TypeSignaturePrimitive, Set[TypeSignaturePrimitive]],
                call: Call) -> None:
-    assert isinstance(call.operator, Variable)
-    if call.operator.name != "ifElse":
+    if isinstance(call.operator, Variable) and call.operator.name == "ifElse":
+        return
+    if isinstance(call.operator, Call):
+        op_sig = get_type(definitions, call.operator)
+    else:
+        assert isinstance(call.operator, Variable)
         op = definitions[call.operator.name]
         assert isinstance(op, (Constant, PrimitiveFunction, CompoundFunction))
-        arg_types = list(map(partial(get_type, definitions), call.operands))
-        assert isinstance(op.type_sig, TypeSignatureFunction)
-        type_assert(len(arg_types) == len(op.type_sig.params), "Wrong number of arguments")
-        for arg_type, param_type in zip(arg_types, op.type_sig.params):
-            assert_types_are_the_same(type_aliases, arg_type, param_type, "todo message")
+        op_sig = op.type_sig
+    arg_types = list(map(partial(get_type, definitions), call.operands))
+    assert isinstance(op_sig, TypeSignatureFunction)
+    type_assert(len(arg_types) == len(op_sig.params), "Wrong number of arguments")
+    for arg_type, param_type in zip(arg_types, op_sig.params):
+        assert_types_are_the_same(type_aliases, arg_type, param_type, "todo message")
 
 
 def get_type(definitions: Dict[str, Definition], expression: Expression) -> TypeSignature:
@@ -72,17 +77,19 @@ def get_type(definitions: Dict[str, Definition], expression: Expression) -> Type
             return get_type(definitions, expression.operands[1])
         if isinstance(expression.operator, (CompoundFunction, PrimitiveFunction)):
             return expression.operator.type_sig
-        if isinstance(expression.operator, Variable):
-            d = definitions[expression.operator.name]
-            assert isinstance(d, (CompoundFunction, PrimitiveFunction))
-            return d.type_sig.return_type
-        return get_type(definitions, expression.operator)
+        assert isinstance(expression.operator, Variable)
+        d = definitions[expression.operator.name]
+        assert isinstance(d, (CompoundFunction, PrimitiveFunction))
+        if len(expression.operands) != len(d.parameters):
+            return TypeSignatureFunction(d.type_sig.params[len(expression.operands):], d.type_sig.return_type)
+        return d.type_sig.return_type
     if isinstance(expression, Variable):
         d = definitions[expression.name]
         if isinstance(d, Constant):
             return d.type_sig
         if isinstance(d, (CompoundFunction, PrimitiveFunction)):
             return d.type_sig
+        assert False
     if isinstance(expression, PrimitiveExpression):
         return derive_type(expression)
     assert False
