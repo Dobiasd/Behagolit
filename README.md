@@ -10,6 +10,10 @@ Behagolit
 =========
 **a toy programming language experiment**
 
+## Disclaimer
+
+Everything here is experimental, intended for my learning and entertainment, and probably not very useful to you, the reader. :)  
+
 ## Philosophy
 
 - [Ubiquefix notation](Ubiquefix.md)
