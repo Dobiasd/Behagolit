@@ -1,7 +1,6 @@
-# Behagolit
+# Idea: "ubiquefix" notation
 
-This document outlines a new function-call syntax, which could be used in a (not-yet-existing) programming language
-named "behagolit".
+This document outlines a new function-call syntax, which perhaps could be used in a (not-yet-existing) programming language.
 
 ## Common notation syntaxes for (mathematical and other) expressions
 
@@ -53,7 +52,7 @@ Example:
 1 2 +
 ```
 
-## Ubiquefix notation (the new kid on the block)
+## Ubiquefix notation
 
 This syntax combines prefix, infix, and postfix into a more general notation.
 
@@ -81,7 +80,7 @@ left-associative. The advantages of this choice will become apparent later.
 
 ## Partial function application
 
-A function fuses with its neighbor values until it's either full (-y applied) or until there are no more values left to
+A function fuses with its neighbor values until it's either full (i.e., fully applied) or until there are no more values left to
 fuse with.
 
 Given a function taking an `A` and `B`, and returning a `C`
@@ -149,7 +148,7 @@ square : Integer -> Integer
 sum : List[Integer] -> Integer
 ```
 
-we can construct a [pipeline-like expressions](https://en.wikipedia.org/wiki/Pipeline_(Unix))
+we can construct a [pipeline-like expression](https://en.wikipedia.org/wiki/Pipeline_(Unix))
 
 ```
 input split ',' map stringToInteger map square sum
@@ -188,7 +187,7 @@ input doTheThing
 ### Alleged ambiguities (and their resolution)
 
 If two functions are next to each other, the ambiguity of which is applied to which, is resolved by the type system,
-i.e., there are no situations in which both ways ("apply f to g" and "apply g to f") would work. Example:
+i.e., there are no situations in which both ways ("apply f to g" *and* "apply g to f") would work. Example:
 
 ```
 f : A -> B
@@ -223,7 +222,7 @@ fAndThenG = f fwdCompose g
 
 ### Is ubiquefix notation good?
 
-We don't yet know.
+I don't yet know.
 
 Sure, the fact, that the order of functions and their arguments is not the same in each (sub-) expression takes getting
-used to. But maybe it's worth it. We'll see! :)
+used to. But maybe it's worth it. I'd love to find out!
