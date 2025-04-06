@@ -1,5 +1,6 @@
 # todo
 
+- try having bilateral currying (fill parameter cavities from whatever side is convenient), with needing to declare the direction explicitly, or is a partial application with named arguments and pipe syntax just best? https://www.reddit.com/r/ProgrammingLanguages/comments/1f2jofh/idea_ubiquefix_functioncall_syntax_prefix_infix/
 - partial application
 - support uniqefix notation
 - unions with non-plain options
@@ -92,6 +93,7 @@
     - https://www.dabeaz.com/ply/ply.html
     - https://rainingcomputers.blog/dist/the_path_to_implementing_a_programming_language.md
     - https://en.wikipedia.org/wiki/Bootstrapping_(compilers)
+- look into this: https://www.craftinginterpreters.com/contents.html
 
 ### sum of squares (text file, lines)
 
